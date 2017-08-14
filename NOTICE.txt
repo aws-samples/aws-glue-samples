@@ -1,0 +1,2 @@
+AWS Glue Sample Code
+Copyright 2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
