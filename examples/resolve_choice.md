@@ -179,6 +179,7 @@ and `provider id_string`:
 
 The resulting schema is:
 
+```
   root
   |-- drg definition: string
   |-- provider id_long: long
@@ -193,7 +194,7 @@ The resulting schema is:
   |-- average total payments: string
   |-- average medicare payments: string
   |-- provider id_string: string
-
+```
   
 #### The `make_struct` option
 Using `make_struct` turns the choice column's type into a struct
