@@ -13,13 +13,14 @@ The associated Python file in the examples folder is:
 The dataset we'll be using in this example was downloaded from the [EveryPolitician](http://everypolitician.org)
 website into our sample-dataset bucket in S3, at:
 
-    s3://awsglue-datasets/examples/us-legislators.
+    s3://awsglue-datasets/examples/us-legislators/all/
 
 It contains data in JSON format about United States legislators and the seats they have held
-in the the House of Representatives and the Senate.
+in the the House of Representatives and the Senate, and has been modified somewhat for purposes
+of this tutorial.
 
-For purposes of our example code, we are assuming that you have created an AWS S3 target bucket and folder,
-which we refer to here as `s3://glue-sample-target/output-dir/`.
+In our example code, we are assuming that you have created an AWS S3 target bucket and folder,
+which we refer to as `s3://glue-sample-target/output-dir/`.
 
 The first step is to crawl this data and put the results into a database called `legislators`
 in your Data Catalog, as described [here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/console-crawlers.html).
