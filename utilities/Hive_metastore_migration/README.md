@@ -175,14 +175,17 @@ job to import the metadata from S3 to the Data Catalog. To do this, you need to
 have a Spark 2.1.x cluster that can connect to your Hive metastore and export
 metadata to plain files on S3.
 
-1. Add a MySQL connector jar available to the Spark cluster in the master and
+1. Make the MySQL connector jar available to the Spark cluster on master and
    all worker nodes, and include the jar in the Spark driver class path as well
-   as with the `--jars` parameter in the `spark-submit` command. You can download
+   as with the `--jars` and `--driver-class-path` parameters in the `spark-submit` command. You can download
    the MySql connector [here at MySql.com](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.42.tar.gz).
+   
    If you use EMR to do this configuration, you can run the EMR bootstrap
    script `emr_bootstrap_action.sh` included in the `shell` folder, and
-   then provide `--jars /usr/lib/hadoop/mysql-connector-java-5.1.42-bin.jar`
-   in the spark-submit script.
+   then provide `--jars /usr/lib/hadoop/mysql-connector-java-5.1.42-bin.jar` and 
+   `--driver-class-path <spark-default-driver-classpath>:/usr/lib/hadoop/mysql-connector-java-5.1.42-bin.jar`
+   in the spark-submit script. See [EMR documentation](http://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-bootstrap.html)
+   for how to run Bootstrap script on EMR.
 
 2. Submit the `hive_metastore_migration.py` Spark script to your Spark cluster
    using the following parameters:
@@ -198,6 +201,22 @@ metadata to plain files on S3.
      to an S3 location manually. If it is an S3 path, you need to make sure that the Spark
      cluster has EMRFS library on its class path. The script will export the metadata to a
      subdirectory of the output-path you provided.
+     
+   - Example spark-submit command to migrate Hive metastore to S3, tested on EMR-4.7.1:
+    ```bash
+    MYSQL_JAR_PATH=/usr/lib/hadoop/mysql-connector-java-5.1.42-bin.jar
+    DRIVER_CLASSPATH=/home/hadoop/*:/etc/hadoop/conf:/etc/hive/conf:/usr/lib/hadoop-lzo/lib/*:/usr/lib/hadoop/hadoop-aws.jar:/usr/share/aws/aws-java-sdk/*:/usr/share/aws/emr/emrfs/conf:/usr/share/aws/emr/emrfs/lib/*:/usr/share/aws/emr/emrfs/auxlib/*:$MYSQL_JAR_PATH
+    spark-submit --driver-class-path $DRIVER_CLASSPATH \
+      --jars $MYSQL_JAR_PATH \
+      /home/hadoop/hive_metastore_migration.py \
+      --mode from-metastore \
+      --jdbc-url jdbc:mysql://metastore.foo.us-east-1.rds.amazonaws.com:3306 \
+      --jdbc-user hive \
+      --jdbc-password myJDBCPassword \
+      --database-prefix myHiveMetastore_ \
+      --table-prefix myHiveMetastore_ \
+      --output-path s3://mybucket/myfolder/
+    ```
 
 3. Create an AWS Glue ETL job similar to the one described in the section to
    connect using JDBC to your Hive metastore.  In the job, set the following parameters.
