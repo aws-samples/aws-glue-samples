@@ -41,7 +41,7 @@ An easy way to debug your pySpark ETL scripts is to create a `DevEndpoint', spin
 the endpoint, and edit and refine the scripts in the notebook. Make sure that the role for DevEndpoint has write access to 
 temporary directory paths used for relationalize and Redshift database specified later in your script. 
 You can set this up through the AWS Glue console, as described
-[here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/tutorial-development-endpoint-notebook.html).
+[here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/dev-endpoint-tutorial-prerequisites.html).
 
 ### 3. Getting started
 
