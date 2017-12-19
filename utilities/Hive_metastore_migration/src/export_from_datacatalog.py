@@ -18,7 +18,7 @@ from awsglue.context import GlueContext
 
 from hive_metastore_migration import *
 
-CONNECTION_TYPE_NAME = "com.amazonaws.services.glue.connections.DataCatalogConnection"
+CONNECTION_TYPE_NAME = 'com.amazonaws.services.glue.connections.DataCatalogConnection'
 
 def transform_catalog_to_df(dyf):
     return dyf.toDF()
@@ -50,7 +50,7 @@ def datacatalog_migrate_to_hive_metastore(sc, sql_context, databases, tables, pa
     hive_metastore.export_to_metastore()
 
 
-def read_databases_from_catalog(sql_context, glue_context, datacatalog_name, database_arr):
+def read_databases_from_catalog(sql_context, glue_context, datacatalog_name, database_arr, region):
     databases = None
     tables = None
     partitions = None
@@ -59,7 +59,9 @@ def read_databases_from_catalog(sql_context, glue_context, datacatalog_name, dat
 
         dyf = glue_context.create_dynamic_frame.from_options(
             connection_type=CONNECTION_TYPE_NAME,
-            connection_options={"catalog.name": datacatalog_name, "catalog.database": database})
+            connection_options={'catalog.name': datacatalog_name,
+                                'catalog.database': database,
+                                'catalog.region': region})
 
         df = transform_catalog_to_df(dyf)
 
@@ -88,6 +90,7 @@ def main():
     parser.add_argument('--database-names', required=True, help='Semicolon-separated list of names of database in Datacatalog to export')
     parser.add_argument('-o', '--output-path', required=False, help='Output path, either local directory or S3 path')
     parser.add_argument('-c', '--connection-name', required=False, help='Glue Connection name for Hive metastore JDBC connection')
+    parser.add_argument('-R', '--region', required=False, help='AWS region of source Glue DataCatalog, default to "us-east-1"')
 
     options = get_options(parser, sys.argv)
     if options['mode'] == to_s3:
@@ -105,6 +108,8 @@ def main():
     else:
         raise AssertionError('unknown mode ' + options['mode'])
 
+    validate_aws_regions(options['region'])
+
     # spark env
     (conf, sc, sql_context) = get_spark_env()
     glue_context = GlueContext(sc)
@@ -116,7 +121,8 @@ def main():
         sql_context=sql_context,
         glue_context=glue_context,
         datacatalog_name='datacatalog',
-        database_arr=database_arr
+        database_arr=database_arr,
+        region=options.get('region') or 'us-east-1'
     )
 
     if options['mode'] == to_s3:

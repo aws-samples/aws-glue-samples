@@ -134,6 +134,10 @@ Below are instructions for using each of the migration workflows described above
      you created to point to the Hive metastore. It is used to extract the Hive JDBC
      connection information using the native Spark library.
 
+   - `--region` the AWS region for Glue Data Catalog, for example, `us-east-1`.
+     You can find a list of Glue supported regions here: http://docs.aws.amazon.com/general/latest/gr/rande.html#glue_region.
+     If not provided, `us-east-1` is used as default.
+
    - `--database-prefix` (optional) set to a string prefix that is applied to the
      database name created in AWS Glue Data Catalog. You can use it as a way
      to track the origin of the metadata, and avoid naming conflicts. The default
@@ -164,7 +168,8 @@ If the above solutions don't apply to your situation, you can choose to first
 migrate your Hive metastore to Amazon S3 objects as a staging area, then run an ETL
 job to import the metadata from S3 to the AWS Glue Data Catalog. To do this, you need to
 have a Spark 2.1.x cluster that can connect to your Hive metastore and export
-metadata to plain files on S3. 
+metadata to plain files on S3. The Hive metastore to S3 migration can also run
+as an Glue ETL job, if AWS Glue can directly connect to your Hive metastore.
 
 1. Make the MySQL connector jar available to the Spark cluster on the master and
    all worker nodes. Include the jar in the Spark driver class path as well
@@ -229,9 +234,12 @@ metadata to plain files on S3.
    Add the following parameters.
 
    - `--mode` set to `from-s3`
-   - `--database-input-path` set to the S3 path containing only databases.
-   - `--table-input-path` set to the S3 path containing only tables.
-   - `--partition-input-path` set to the S3 path containing only partitions.
+   - `--region` the AWS region for Glue Data Catalog, for example, `us-east-1`.
+     You can find a list of Glue supported regions here: http://docs.aws.amazon.com/general/latest/gr/rande.html#glue_region.
+     If not provided, `us-east-1` is used as default.
+   - `--database-input-path` set to the S3 path containing only databases. For example: `s3://someBucket/output_path_from_previous_job/databases`
+   - `--table-input-path` set to the S3 path containing only tables. For example: `s3://someBucket/output_path_from_previous_job/tables`
+   - `--partition-input-path` set to the S3 path containing only partitions. For example: `s3://someBucket/output_path_from_previous_job/partitions`
 
    Also, because there is no need to connect to any JDBC source, the job doesn't
    require any connections.
@@ -315,6 +323,9 @@ metadata to plain files on S3.
       directly to a jdbc Hive Metastore
    - `--connection-name` set to the name of the AWS Glue connection
       you created to point to the Hive metastore. It is the destination of the migration.
+   - `--region` the AWS region for Glue Data Catalog, for example, `us-east-1`.
+     You can find a list of Glue supported regions here: http://docs.aws.amazon.com/general/latest/gr/rande.html#glue_region.
+     If not provided, `us-east-1` is used as default.
    - `--database-names` set to a semi-colon(;) separated list of
       database names to export from Data Catalog.
 
@@ -333,7 +344,10 @@ metadata to plain files on S3.
    instructions above. Since the destination is now an S3 bucket instead of a Hive metastore,
    no connections are required. In the job, add the following parameters:
 
-   - `--mode` set to `to-S3`, which means the migration is to S3.
+   - `--mode` set to `to-s3`, which means the migration is to S3.
+   - `--region` the AWS region for Glue Data Catalog, for example, `us-east-1`.
+     You can find a list of Glue supported regions here: http://docs.aws.amazon.com/general/latest/gr/rande.html#glue_region.
+     If not provided, `us-east-1` is used as default.
    - `--database-names` set to a semi-colon(;) separated list of
       database names to export from Data Catalog.
    - `--output-path` set to the S3 destination path.
@@ -365,8 +379,7 @@ metadata to plain files on S3.
     	 
 #### AWS Glue Data Catalog to another AWS Glue Data Catalog
  
-Currently, you cannot access an AWS Glue Data Catalog in another account. 
-However, you can migrate (copy) metadata from the Data Catalog in one account to another. The steps are:
+You can migrate (copy) metadata from the Data Catalog in one account to another. The steps are:
  
 1. Enable cross-account access for an S3 bucket so that both source and target accounts can access it. See  
    [the Amazon S3 documenation](http://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html#example-bucket-policies-use-case-1) 
@@ -379,7 +392,7 @@ However, you can migrate (copy) metadata from the Data Catalog in one account to
        
 3. Upload the the following scripts to an S3 bucket accessible from the target AWS account to be updated:
 
-       export_from_datacatalog.py
+       import_into_datacatalog.py
        hive_metastore_migration.py       
 
 4. In the source AWS account, create a job on the AWS Glue console to extract metadata from the AWS Glue Data Catalog to S3.
@@ -391,7 +404,10 @@ However, you can migrate (copy) metadata from the Data Catalog in one account to
        
    Add the following parameters:
  
-   - `--mode` set to `to-S3`, which means the migration is to S3.
+   - `--mode` set to `to-s3`, which means the migration is to S3.
+   - `--region` the AWS region for Glue Data Catalog, for example, `us-east-1`.
+     You can find a list of Glue supported regions here: http://docs.aws.amazon.com/general/latest/gr/rande.html#glue_region.
+     If not provided, `us-east-1` is used as default.
    - `--database-names` set to a semi-colon(;) separated list of
       database names to export from Data Catalog.
    - `--output-path` set to the S3 destination path that you configured with **cross-account access**.
@@ -407,10 +423,12 @@ However, you can migrate (copy) metadata from the Data Catalog in one account to
    Add the following parameters.
  
    - `--mode` set to `from-s3`
+   - `--region` the AWS region for Glue Data Catalog, for example, `us-east-1`.
+     You can find a list of Glue supported regions here: http://docs.aws.amazon.com/general/latest/gr/rande.html#glue_region.
+     If not provided, `us-east-1` is used as default.
    - `--database-input-path` set to the S3 path containing only databases.
    - `--table-input-path` set to the S3 path containing only tables.
    - `--partition-input-path` set to the S3 path containing only partitions.
    
 6. (Optional) Manually delete the temporary files generated in the S3 folder. Also, remember to revoke the 
    cross-account access if it's not needed anymore.          
-

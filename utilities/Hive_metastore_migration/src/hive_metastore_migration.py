@@ -2,9 +2,9 @@
 #  Licensed under the Amazon Software License (the "License"). You may not use
 #  this file except in compliance with the License. A copy of the License is
 #  located at
-# 
+#
 #    http://aws.amazon.com/asl/
-# 
+#
 #  and in the "LICENSE" file accompanying this file. This file is distributed
 #  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express
 #  or implied. See the License for the specific language governing
@@ -15,6 +15,7 @@
 import sys
 import argparse
 import re
+import logging
 from time import localtime, strftime
 from types import MethodType
 from datetime import tzinfo, datetime, timedelta
@@ -34,34 +35,34 @@ TO_METASTORE = 'to-metastore'
 
 DATACATALOG_STORAGE_DESCRIPTOR_SCHEMA = \
     StructType([
-         StructField('inputFormat', StringType(), True),
-         StructField('compressed', BooleanType(), False),
-         StructField('storedAsSubDirectories', BooleanType(), False),
-         StructField('location', StringType(), True),
-         StructField('numberOfBuckets', IntegerType(), False),
-         StructField('outputFormat', StringType(), True),
-         StructField('bucketColumns', ArrayType(StringType(), True), True),
-         StructField('columns', ArrayType(StructType([
-             StructField('name', StringType(), True),
-             StructField('type', StringType(), True),
-             StructField('comment', StringType(), True)
-         ]), True), True),
-         StructField('parameters', MapType(StringType(), StringType(), True), True),
-         StructField('serdeInfo', StructType([
-             StructField('name', StringType(), True),
-             StructField('serializationLibrary', StringType(), True),
-             StructField('parameters', MapType(StringType(), StringType(), True), True)
-         ]), True),
-         StructField('skewedInfo', StructType([
-             StructField('skewedColumnNames', ArrayType(StringType(), True), True),
-             StructField('skewedColumnValueLocationMaps', MapType(StringType(), StringType(), True), True),
-             StructField('skewedColumnValues', ArrayType(StringType(), True), True)
-         ]), True),
-         StructField('sortColumns', ArrayType(StructType([
-             StructField('column', StringType(), True),
-             StructField('order', IntegerType(), True)
-         ]), True), True)
-     ])
+        StructField('inputFormat', StringType(), True),
+        StructField('compressed', BooleanType(), False),
+        StructField('storedAsSubDirectories', BooleanType(), False),
+        StructField('location', StringType(), True),
+        StructField('numberOfBuckets', IntegerType(), False),
+        StructField('outputFormat', StringType(), True),
+        StructField('bucketColumns', ArrayType(StringType(), True), True),
+        StructField('columns', ArrayType(StructType([
+            StructField('name', StringType(), True),
+            StructField('type', StringType(), True),
+            StructField('comment', StringType(), True)
+        ]), True), True),
+        StructField('parameters', MapType(StringType(), StringType(), True), True),
+        StructField('serdeInfo', StructType([
+            StructField('name', StringType(), True),
+            StructField('serializationLibrary', StringType(), True),
+            StructField('parameters', MapType(StringType(), StringType(), True), True)
+        ]), True),
+        StructField('skewedInfo', StructType([
+            StructField('skewedColumnNames', ArrayType(StringType(), True), True),
+            StructField('skewedColumnValueLocationMaps', MapType(StringType(), StringType(), True), True),
+            StructField('skewedColumnValues', ArrayType(StringType(), True), True)
+        ]), True),
+        StructField('sortColumns', ArrayType(StructType([
+            StructField('column', StringType(), True),
+            StructField('order', IntegerType(), True)
+        ]), True), True)
+    ])
 
 DATACATALOG_DATABASE_ITEM_SCHEMA = \
     StructType([
@@ -104,8 +105,8 @@ DATACATALOG_PARTITION_ITEM_SCHEMA = \
 DATACATALOG_DATABASE_SCHEMA = \
     StructType([
         StructField('items', ArrayType(
-                DATACATALOG_DATABASE_ITEM_SCHEMA, False),
-            True),
+            DATACATALOG_DATABASE_ITEM_SCHEMA, False),
+                    True),
         StructField('type', StringType(), False)
     ])
 
@@ -193,7 +194,7 @@ def drop_columns(df, columns_to_drop):
 
 def rename_columns(df, rename_tuples=None):
     """
-    rename columns, for each key in rename_map, rename column from key to value
+    Rename columns, for each key in rename_map, rename column from key to value
     :param df: dataframe
     :param rename_map: map for columns to be renamed
     :return: new dataframe with columns renamed
@@ -226,7 +227,7 @@ def join_other_to_single_column(df, other, on, how, new_column_name):
 
 def coalesce_by_row_count(df, desired_rows_per_partition=10):
     """
-    coalesce dataframe to reduce number of partitions, to avoid fragmentation of data
+    Coalesce dataframe to reduce number of partitions, to avoid fragmentation of data
     :param df: dataframe
     :param desired_rows_per_partition: desired number of rows per partition, there is no guarantee the actual rows count
     is larger or smaller
@@ -240,7 +241,7 @@ def coalesce_by_row_count(df, desired_rows_per_partition=10):
 
 def batch_items_within_partition(sql_context, df, key_col, value_col, values_col):
     """
-    group a DataFrame of key, value pairs, create a list of values for the same key in each spark partition, but there 
+    Group a DataFrame of key, value pairs, create a list of values for the same key in each spark partition, but there
     is no cross-partition data interaction, so the same key may be shown multiple times in the output dataframe
     :param sql_context: spark sqlContext
     :param df: DataFrame with only two columns, a key_col and a value_col
@@ -275,7 +276,8 @@ def batch_metastore_partitions(sql_context, df_parts):
     :param sql_context: the spark SqlContext
     :param df_parts: the dataframe of partitions with the schema of DATACATALOG_PARTITION_SCHEMA
     :type df_parts: DataFrame
-    :return: 
+    :return: a dataframe partition in which each row contains a list of catalog partitions
+    belonging to the same database and table.
     """
     df_kv = df_parts.select(struct(['database', 'table', 'type']).alias('key'), 'item')
     batched_kv = batch_items_within_partition(sql_context, df_kv, key_col='key', value_col='item', values_col='items')
@@ -470,7 +472,7 @@ class HiveMetastoreTransformer:
             .replace('"', '\\"')\
             .replace('{', '\\{')\
             .replace(':', '\\:')\
-            .replace('}', '\\}')\
+            .replace('}', '\\}')
 
         return ret_param_value
 
@@ -537,6 +539,25 @@ class HiveMetastoreTransformer:
         for k, v in date_cols_map.iteritems():
             df = HiveMetastoreTransformer.utc_timestamp_to_iso8601_time(df, k, v)
         return df
+
+    @staticmethod
+    def fill_none_with_empty_list(df, column):
+        """
+        Given a column of array type, fill each None value with empty list.
+        This is not doable by df.na.fill(), Spark will throw Unsupported value type java.util.ArrayList ([]).
+        :param df: dataframe with array type
+        :param column: column name string, the column must be array type
+        :return: dataframe that fills None with empty list for the given column
+        """
+        return HiveMetastoreTransformer.modify_column_by_udf(
+            df=df,
+            udf=UserDefinedFunction(
+                lambda lst: [] if lst is None else lst,
+                get_schema_type(df, column)
+            ),
+            column_to_modify=column,
+            new_column_name=column
+        )
 
     @staticmethod
     def join_dbs_tbls(ms_dbs, ms_tbls):
@@ -606,7 +627,7 @@ class HiveMetastoreTransformer:
 
         serde_with_params = self.join_with_params(df=ms_serdes, df_params=escaped_serde_params, id_col='SERDE_ID')
         serde_info = serde_with_params.rename_columns(rename_tuples=[
-            ('NAME', 'name'), 
+            ('NAME', 'name'),
             ('SLIB', 'serializationLibrary')
         ])
         return serde_info
@@ -642,7 +663,9 @@ class HiveMetastoreTransformer:
             ('IS_STOREDASSUBDIRECTORIES', 'storedAsSubDirectories')
         ])
 
-        storage_descriptors_final = storage_descriptors_renamed.drop_columns(['SERDE_ID', 'CD_ID'])
+        storage_descriptors_with_empty_sorted_cols = HiveMetastoreTransformer.fill_none_with_empty_list(
+            storage_descriptors_renamed, 'sortColumns')
+        storage_descriptors_final = storage_descriptors_with_empty_sorted_cols.drop_columns(['SERDE_ID', 'CD_ID'])
         return storage_descriptors_final
 
     def transform_tables(self, db_tbl_joined, ms_table_params, storage_descriptors, ms_partition_keys):
@@ -653,8 +676,8 @@ class HiveMetastoreTransformer:
         tbls_with_params = self.join_with_params(df=tbls_date_transformed, df_params=self.transform_param_value(ms_table_params), id_col='TBL_ID')
         partition_keys = self.transform_ms_partition_keys(ms_partition_keys)
 
-        tbls_joined = tbls_with_params \
-            .join(other=partition_keys, on='TBL_ID', how='left_outer') \
+        tbls_joined = tbls_with_params\
+            .join(other=partition_keys, on='TBL_ID', how='left_outer')\
             .join_other_to_single_column(other=storage_descriptors, on='SD_ID', how='left_outer',
                                          new_column_name='storageDescriptor')
 
@@ -672,7 +695,9 @@ class HiveMetastoreTransformer:
 
         tbls_dropped_cols = tbls_renamed.drop_columns(['DB_ID', 'TBL_ID', 'SD_ID', 'LINK_TARGET_ID'])
         tbls_drop_invalid = tbls_dropped_cols.na.drop(how='any', subset=['name', 'database'])
-        tbls_final = tbls_drop_invalid.select(
+        tbls_with_empty_part_cols = HiveMetastoreTransformer.fill_none_with_empty_list(
+            tbls_drop_invalid, 'partitionKeys')
+        tbls_final = tbls_with_empty_part_cols.select(
             'database', struct(remove(tbls_dropped_cols.columns, 'database')).alias('item')
         ).withColumn('type', lit('table'))
         return tbls_final
@@ -792,7 +817,7 @@ class DataCatalogTransformer:
 
     @staticmethod
     def udf_milliseconds_str_to_timestamp(milliseconds_str):
-        return long(milliseconds_str) / 1000
+        return 0L if milliseconds_str is None else long(milliseconds_str) / 1000
 
     @staticmethod
     def udf_string_list_str_to_list(str):
@@ -831,11 +856,11 @@ class DataCatalogTransformer:
         :return: new df with exploded rows.
         """
         idx_udf = UserDefinedFunction(
-            DataCatalogTransformer.udf_array_to_map, 
+            DataCatalogTransformer.udf_array_to_map,
             MapType(IntegerType(), col_schema, True))
 
         return df.withColumn('idx_columns', idx_udf(col(col_name)))\
-                 .select(id_name, explode('idx_columns').alias("INTEGER_IDX", "col"))
+            .select(id_name, explode('idx_columns').alias("INTEGER_IDX", "col"))
 
     @staticmethod
     def column_date_to_timestamp(df, column):
@@ -843,8 +868,8 @@ class DataCatalogTransformer:
             DataCatalogTransformer.udf_milliseconds_str_to_timestamp,
             IntegerType())
         return df.withColumn(column + '_new', date_to_udf_time_int(col(column)))\
-                 .drop(column)\
-                 .withColumnRenamed(column + '_new', column)
+            .drop(column)\
+            .withColumnRenamed(column + '_new', column)
 
     @staticmethod
     def params_to_df(df, id_name):
@@ -891,7 +916,7 @@ class DataCatalogTransformer:
                                .alias('locationUriNew'))\
             .drop('locationUri')\
             .withColumnRenamed('locationUriNew', 'locationUri')
-        
+
         return ms_dbs
 
     def reformat_dbs(self, ms_dbs):
@@ -899,14 +924,14 @@ class DataCatalogTransformer:
             ('locationUri', 'DB_LOCATION_URI'),
             ('name', 'NAME')
         ])
-        
+
         return ms_dbs
 
     def extract_tbls(self, tables, ms_dbs):
         ms_tbls_no_id = tables\
-                .join(ms_dbs, tables.database == ms_dbs.NAME, 'inner')\
-                .select(tables.database, tables.item, ms_dbs.DB_ID)\
-                .select('DB_ID', 'database', 'item.*')# database col needed for later
+            .join(ms_dbs, tables.database == ms_dbs.NAME, 'inner')\
+            .select(tables.database, tables.item, ms_dbs.DB_ID)\
+            .select('DB_ID', 'database', 'item.*')# database col needed for later
         ms_tbls = self.generate_id_df(ms_tbls_no_id, 'TBL_ID')
 
         return ms_tbls
@@ -927,7 +952,7 @@ class DataCatalogTransformer:
             ('viewExpandedText', 'VIEW_EXPANDED_TEXT'),
             ('viewOriginalText', 'VIEW_ORIGINAL_TEXT')
         ])
-        
+
         return ms_tbls
 
     def get_name_for_partitions(self, ms_partitions, ms_tbls):
@@ -939,21 +964,21 @@ class DataCatalogTransformer:
 
         ms_partitions = ms_partitions.join(tbls_for_join, ms_partitions.TBL_ID == tbls_for_join.TBL_ID, 'inner')\
             .drop(tbls_for_join.TBL_ID)\
-            .withColumn('PART_NAME', combine_part_key_and_vals(col('partitionKeys'), col('values')) )\
+            .withColumn('PART_NAME', combine_part_key_and_vals(col('partitionKeys'), col('values')))\
             .drop('partitionKeys')
 
         return ms_partitions
 
     def extract_partitions(self, partitions, ms_dbs, ms_tbls):
         ms_partitions = partitions.join(ms_dbs, partitions.database == ms_dbs.NAME, 'inner')\
-                .select(partitions.item, ms_dbs.DB_ID, partitions.table)\
-        
+            .select(partitions.item, ms_dbs.DB_ID, partitions.table)
+
         cond = [ms_partitions.table == ms_tbls.TBL_NAME, ms_partitions.DB_ID == ms_tbls.DB_ID]
 
         ms_partitions = ms_partitions.join(ms_tbls, cond, 'inner')\
-                .select(ms_partitions.item, ms_tbls.TBL_ID)\
-                .select('TBL_ID', 'item.*')
-        
+            .select(ms_partitions.item, ms_tbls.TBL_ID)\
+            .select('TBL_ID', 'item.*')
+
         # generate PART_ID
         ms_partitions = self.generate_id_df(ms_partitions, 'PART_ID')
 
@@ -1018,7 +1043,7 @@ class DataCatalogTransformer:
 
         ms_sds = self.generate_id_df(ms_sds, 'CD_ID')
         ms_sds = self.generate_id_df(ms_sds, 'SERDE_ID')
-        
+
         return ms_sds
 
     def extract_from_dbs(self, hms, ms_dbs):
@@ -1029,7 +1054,7 @@ class DataCatalogTransformer:
 
     def extract_from_tbls(self, hms, ms_tbls):
         ms_table_params = DataCatalogTransformer.params_to_df(ms_tbls, 'TBL_ID')
- 
+
         part_key_schema = StructType([
             StructField('name', StringType(), True),
             StructField('type', StringType(), True),
@@ -1060,7 +1085,7 @@ class DataCatalogTransformer:
 
         ms_partition_key_vals = \
             DataCatalogTransformer.generate_idx_for_df(ms_partitions, 'PART_ID', 'values', part_key_val_schema)\
-            .withColumnRenamed('col', 'PART_KEY_VAL')
+                .withColumnRenamed('col', 'PART_KEY_VAL')
 
         hms.ms_partition_key_vals = ms_partition_key_vals
         hms.ms_partition_params = ms_partition_params
@@ -1072,7 +1097,7 @@ class DataCatalogTransformer:
         ms_sd_params = DataCatalogTransformer.params_to_df(ms_sds, 'SD_ID')
 
         ms_cds = ms_sds.select('CD_ID')
-        
+
         ms_columns = self.extract_from_sds_columns(ms_sds)
 
         (ms_serdes, ms_serde_params) = self.extract_from_sds_serde_info(ms_sds)
@@ -1082,7 +1107,7 @@ class DataCatalogTransformer:
         hms.ms_sd_params = ms_sd_params
         hms.ms_cds = ms_cds
         hms.ms_columns = ms_columns
-        hms.ms_serdes = ms_serdes 
+        hms.ms_serdes = ms_serdes
         hms.ms_serde_params = ms_serde_params
         hms.ms_sort_cols = ms_sort_cols
 
@@ -1130,15 +1155,15 @@ class DataCatalogTransformer:
         # with extra field 'STRING_LIST_STR'
         skewed_col_value_loc_map = skewed_info\
             .select('SD_ID', explode('skewedColumnValueLocationMaps')\
-                    .alias('STRING_LIST_STR', 'LOCATION'))\
-        
+                    .alias('STRING_LIST_STR', 'LOCATION'))
+
         skewed_col_value_loc_map = self.generate_id_df(skewed_col_value_loc_map, 'STRING_LIST_ID_KID')
 
-        udf_string_list_list = UserDefinedFunction(DataCatalogTransformer.udf_string_list_str_to_list, 
+        udf_string_list_list = UserDefinedFunction(DataCatalogTransformer.udf_string_list_str_to_list,
                                                    ArrayType(StringType(), True))
 
         skewed_string_list_values = skewed_col_value_loc_map\
-            .select(col('STRING_LIST_ID_KID').alias('STRING_LIST_ID'), 
+            .select(col('STRING_LIST_ID_KID').alias('STRING_LIST_ID'),
                     udf_string_list_list('STRING_LIST_STR').alias('STRING_LIST_LIST'))
 
         ms_skewed_string_list_values = DataCatalogTransformer.generate_idx_for_df(
@@ -1165,9 +1190,9 @@ class DataCatalogTransformer:
                                                               StructField('column', StringType(), True),
                                                               StructField('order', IntegerType(), True)
                                                           ]))\
-                    .select('SD_ID', 'INTEGER_IDX', 'col.*')\
-                    .withColumnRenamed('column', 'COLUMN_NAME')\
-                    .withColumnRenamed('order', 'ORDER')
+            .select('SD_ID', 'INTEGER_IDX', 'col.*')\
+            .withColumnRenamed('column', 'COLUMN_NAME')\
+            .withColumnRenamed('order', 'ORDER')
 
     def get_start_id_for_id_name(self, hms):
         hms.extract_metastore()
@@ -1278,6 +1303,7 @@ class HiveMetastore:
 
     # order of write matters here
     def export_to_metastore(self):
+        self.ms_dbs.show()
         self.write_table(connection=self.connection, table_name='DBS', df=self.ms_dbs)
         self.write_table(connection=self.connection, table_name='DATABASE_PARAMS', df=self.ms_database_params)
         self.write_table(connection=self.connection, table_name='CDS', df=self.ms_cds)
@@ -1288,11 +1314,11 @@ class HiveMetastore:
         self.write_table(connection=self.connection, table_name='SD_PARAMS', df=self.ms_sd_params)
         self.write_table(connection=self.connection, table_name='SKEWED_COL_NAMES', df=self.ms_skewed_col_names)
         self.write_table(connection=self.connection, table_name='SKEWED_STRING_LIST', df=self.ms_skewed_string_list)
-        self.write_table(connection=self.connection, table_name='SKEWED_STRING_LIST_VALUES', 
+        self.write_table(connection=self.connection, table_name='SKEWED_STRING_LIST_VALUES',
                          df=self.ms_skewed_string_list_values)
-        self.write_table(connection=self.connection, table_name='SKEWED_COL_VALUE_LOC_MAP', 
+        self.write_table(connection=self.connection, table_name='SKEWED_COL_VALUE_LOC_MAP',
                          df=self.ms_skewed_col_value_loc_map)
-        self.write_table(connection=self.connection, table_name='SORT_COLS', 
+        self.write_table(connection=self.connection, table_name='SORT_COLS',
                          df=self.ms_sort_cols)
         self.write_table(connection=self.connection, table_name='TBLS', df=self.ms_tbls)
         self.write_table(connection=self.connection, table_name='TABLE_PARAMS', df=self.ms_table_params)
@@ -1431,6 +1457,47 @@ def validate_options_in_mode(options, mode, required_options, not_allowed_option
     for option in not_allowed_options:
         if options.get(option) is not None:
             raise AssertionError('Option %s is not allowed for mode %s' % (option, mode))
+
+
+def validate_aws_regions(region):
+    """
+    To validate the region in the input. The region list below may be outdated as AWS and Glue expands, so it only
+    create an error message if validation fails.
+    If the migration destination is in a region other than Glue supported regions, the job will fail.
+    :return: None
+    """
+    if region is None:
+        return
+
+    aws_glue_regions = [
+        'ap-northeast-1' # Tokyo
+        'eu-west-1', # Ireland
+        'us-east-1', # North Virginia
+        'us-east-2', # Ohio
+        'us-west-2', # Oregon
+    ]
+
+    aws_regions = aws_glue_regions + [
+        'ap-northeast-2', # Seoul
+        'ap-south-1', # Mumbai
+        'ap-southeast-1', # Singapore
+        'ap-southeast-2', # Sydney
+        'ca-central-1', # Montreal
+        'cn-north-1', # Beijing
+        'cn-northwest-1', # Ningxia
+        'eu-central-1', # Frankfurt
+        'eu-west-2', # London
+        'sa-east-1', # Sao Paulo
+        'us-gov-west-1', # GovCloud
+        'us-west-1' # Northern California
+    ]
+
+    error_msg = "Invalid region: {0}, the job will fail if the destination is not in a Glue supported region".format(region)
+    if region not in aws_regions:
+        logging.error(error_msg)
+    elif region not in aws_glue_regions:
+        logging.warn(error_msg)
+
 
 
 def main():

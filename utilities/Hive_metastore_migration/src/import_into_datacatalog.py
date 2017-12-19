@@ -33,7 +33,7 @@ def transform_df_to_catalog_import_schema(sql_context, glue_context, df_database
     return dyf_databases, dyf_tables, dyf_partitions
 
 
-def import_datacatalog(sql_context, glue_context, datacatalog_name, databases, tables, partitions):
+def import_datacatalog(sql_context, glue_context, datacatalog_name, databases, tables, partitions, region):
 
     # TEMP: get around datacatalog writer performance issue
     limited_partitions = partitions.limit(10)
@@ -43,17 +43,18 @@ def import_datacatalog(sql_context, glue_context, datacatalog_name, databases, t
 
     # load
     glue_context.write_dynamic_frame.from_options(
-        frame=dyf_databases, connection_type="catalog",
-        connection_options={"catalog.name": datacatalog_name})
+        frame=dyf_databases, connection_type='catalog',
+        connection_options={'catalog.name': datacatalog_name, 'catalog.region': region})
     glue_context.write_dynamic_frame.from_options(
-        frame=dyf_tables, connection_type="catalog",
-        connection_options={"catalog.name": datacatalog_name})
+        frame=dyf_tables, connection_type='catalog',
+        connection_options={'catalog.name': datacatalog_name, 'catalog.region': region})
     glue_context.write_dynamic_frame.from_options(
-        frame=dyf_partitions, connection_type="catalog",
-        connection_options={"catalog.name": datacatalog_name})
+        frame=dyf_partitions, connection_type='catalog',
+        connection_options={'catalog.name': datacatalog_name, 'catalog.region': region})
 
 
-def metastore_full_migration(sc, sql_context, glue_context, connection, datacatalog_name, db_prefix, table_prefix):
+def metastore_full_migration(sc, sql_context, glue_context, connection, datacatalog_name, db_prefix, table_prefix
+                             , region):
     # extract
     hive_metastore = HiveMetastore(connection, sql_context)
     hive_metastore.extract_metastore()
@@ -63,11 +64,11 @@ def metastore_full_migration(sc, sql_context, glue_context, connection, datacata
         sc, sql_context, db_prefix, table_prefix).transform(hive_metastore)
 
     #load
-    import_datacatalog(sql_context, glue_context, datacatalog_name, databases, tables, partitions)
+    import_datacatalog(sql_context, glue_context, datacatalog_name, databases, tables, partitions, region)
 
 
 def metastore_import_from_s3(sql_context, glue_context,db_input_dir, tbl_input_dir, parts_input_dir,
-                             datacatalog_name):
+                             datacatalog_name, region):
 
     # extract
     databases = sql_context.read.json(path=db_input_dir, schema=METASTORE_DATABASE_SCHEMA)
@@ -75,7 +76,7 @@ def metastore_import_from_s3(sql_context, glue_context,db_input_dir, tbl_input_d
     partitions = sql_context.read.json(path=parts_input_dir, schema=METASTORE_PARTITION_SCHEMA)
 
     # load
-    import_datacatalog(sql_context, glue_context, datacatalog_name, databases, tables, partitions)
+    import_datacatalog(sql_context, glue_context, datacatalog_name, databases, tables, partitions, region)
 
 
 def main():
@@ -85,6 +86,7 @@ def main():
     parser = argparse.ArgumentParser(prog=sys.argv[0])
     parser.add_argument('-m', '--mode', required=True, choices=[from_s3, from_jdbc], help='Choose to migrate metastore either from JDBC or from S3')
     parser.add_argument('-c', '--connection-name', required=False, help='Glue Connection name for Hive metastore JDBC connection')
+    parser.add_argument('-R', '--region', required=False, help='AWS region of target Glue DataCatalog, default to "us-east-1"')
     parser.add_argument('-d', '--database-prefix', required=False, help='Optional prefix for database names in Glue DataCatalog')
     parser.add_argument('-t', '--table-prefix', required=False, help='Optional prefix for table name in Glue DataCatalog')
     parser.add_argument('-D', '--database-input-path', required=False, help='An S3 path containing json files of metastore database entities')
@@ -107,6 +109,8 @@ def main():
     else:
         raise AssertionError('unknown mode ' + options['mode'])
 
+    validate_aws_regions(options['region'])
+
     # spark env
     (conf, sc, sql_context) = get_spark_env()
     glue_context = GlueContext(sc)
@@ -119,7 +123,8 @@ def main():
             db_input_dir=options['database_input_path'],
             tbl_input_dir=options['table_input_path'],
             parts_input_dir=options['partition_input_path'],
-            datacatalog_name='datacatalog'
+            datacatalog_name='datacatalog',
+            region=options.get('region') or 'us-east-1'
         )
     elif options['mode'] == from_jdbc:
         glue_context.extract_jdbc_conf(options['connection_name'])
@@ -128,9 +133,10 @@ def main():
             sql_context=sql_context,
             glue_context=glue_context,
             connection=glue_context.extract_jdbc_conf(options['connection_name']),
-            db_prefix=options['database_prefix'] if options.has_key('database_prefix') else "",
-            table_prefix=options['table_prefix'] if options.has_key('table_prefix') else "",
-            datacatalog_name='datacatalog'
+            db_prefix=options.get('database_prefix') or '',
+            table_prefix=options.get('table_prefix') or '',
+            datacatalog_name='datacatalog',
+            region=options.get('region') or 'us-east-1'
         )
 
 if __name__ == '__main__':
