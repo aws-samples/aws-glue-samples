@@ -8,9 +8,9 @@ with varying types. They also provide powerful primitives to deal with nesting a
 This example shows how to process CSV files that have unexpected variations in them
 and convert them into nested and structured Parquet for fast analysis.
 
-The associated Python file in the examples folder is:
+The associated Python file in the examples folder is: [data_cleaning_and_lambda.py](data_cleaning_and_lambda.py)
 
-    data_cleaning_and_lambda.py
+A Scala version of the script corresponding to this example can be found in the file: [DataCleaningLambda.scala](DataCleaningLambda.scala)
 
 ### 1. Crawl our sample dataset
 
@@ -25,32 +25,15 @@ This modified file can be found in:
 The first step is to crawl this data and put the results into a database called `payments`
 in your Data Catalog, as described [here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/console-crawlers.html).
 The crawler will read the first 2 MB of data from that file and create one table, `medicare`,
-in the `payments` database in the AWS Glue Data Catalog.
+in the `payments` datebase in the Data Catalog.
 
-The schema for the `medicare` table in the AWS Glue Data Catalog is as follows:
 
-```
-Column  name                            Data type
-==================================================
-drg definition                          string
-provider id                             bigint
-provider name                           string
-provider street address                 string
-provider city                           string
-provider state                          string
-provider zip code                       bigint
-hospital referral region description    string
-total discharges                        bigint
-average covered charges                 string
-average total payments                  string
-average medicare payments               string
-```
+### 2. Spin up a DevEndpoint to work with
 
-### 2. Spin up a DevEndpoint and notebook to work with
+The easiest way to debug pySpark ETL scripts is to create a `DevEndpoint'
+and run your code there.  You can do this in the AWS Glue console, as described
+[here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/tutorial-development-endpoint-notebook.html).
 
-An easy way to debug your pySpark ETL scripts is to create a `DevEndpoint', spin up and attach a Zeppelin notebook server to
-the endpoint, and edit and refine the scripts in the notebook. You can set this up through the AWS Glue console, as described 
-[here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/tutorial-development-endpoint-notebook.html)
 
 ### 3. Getting started
 
@@ -95,7 +78,8 @@ The output from `printSchema` is:
      |--  Average Total Payments : string (nullable = true)
      |-- Average Medicare Payments: string (nullable = true)
 
-Now, let's look at the schema that a DynamicFrame generates:
+Now, let's see what the schema looks like after we load the data into a DynamicFrame,
+starting from the metadata that the crawler put in the AWS Glue Data Catalog:
 
     medicare_dynamicframe = glueContext.create_dynamic_frame.from_catalog(
            database = "payments",
@@ -120,18 +104,16 @@ The output from `printSchema` this time is:
     |-- average total payments: string
     |-- average medicare payments: string
 
-The DynamicFrame generates a schema in which `provider id` could be either a `long`
-or a `string`, whereas the DataFrame schema lists `Provider Id` as being a `string`,
-and the Data Catalog lists `provider id` as being a `bigint`.
-
+The DynamicFrame generated a schema in which `provider id` could be either a `long`
+or a 'string', whereas the DataFrame schema listed `Provider Id` as being a `string`.
 Which one is right? Well, it turns out there are two records (out of 160K records)
-at the end of the file with `string`s in that column (these are the erroneous records
+at the end of the file with strings in that column (these are the erroneous records
 that we introduced to illustrate our point).
 
 DynamicFrames introduce the notion of a `choice` type. In this case, it shows that both
-`long` and `string` may appear in that column. The AWS Glue crawler misses the `string`
-because it only considers a 2MB prefix of the data. The Spark DataFrame considers the
-whole dataset, but is forced to assign the most general type to the column (`string`).
+`long` and `string` may appear in that column. The AWS Glue crawler missed the `string`
+because it only considered a 2MB prefix of the data. The Spark DataFrame considered the
+whole dataset, but was forced to assign the most general type to the column (`string`).
 In fact, Spark often resorts to the most general case when there are complex types or
 variations with which it is unfamiliar.
 

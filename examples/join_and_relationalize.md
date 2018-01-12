@@ -4,23 +4,22 @@ This example shows how to do joins and filters with transforms entirely on Dynam
 It also shows you how to create tables from semi-structured data that can be loaded into
 relational databases like Redshift.
 
-The associated Python file in the examples folder is:
+The associated Python file in the examples folder is: [join_and_relationalize.py](join_and_relationalize.py)
 
-    join_and_relationalize.py
+A Scala version of the script corresponding to this example can be found in the file: [JoinAndRelationalize.scala](JoinAndRelationalize.scala)
 
 ### 1. Crawl our sample dataset
 
 The dataset we'll be using in this example was downloaded from the [EveryPolitician](http://everypolitician.org)
 website into our sample-dataset bucket in S3, at:
 
-    s3://awsglue-datasets/examples/us-legislators/all/
+    s3://awsglue-datasets/examples/us-legislators.
 
 It contains data in JSON format about United States legislators and the seats they have held
-in the the House of Representatives and the Senate, and has been modified somewhat for purposes
-of this tutorial.
+in the the House of Representatives and the Senate.
 
-In our example code, we are assuming that you have created an AWS S3 target bucket and folder,
-which we refer to as `s3://glue-sample-target/output-dir/`.
+For purposes of our example code, we are assuming that you have created an AWS S3 target bucket and folder,
+which we refer to here as `s3://glue-sample-target/output-dir/`.
 
 The first step is to crawl this data and put the results into a database called `legislators`
 in your Data Catalog, as described [here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/console-crawlers.html).
@@ -35,13 +34,11 @@ The crawler will create the following tables in the `legislators` database:
 
 This is a semi-normalized collection of tables containing legislators and their histories.
 
-### 2. Spin up a DevEndpoint and notebook to work with
+### 2. Spin up a DevEndpoint to work with
 
-An easy way to debug your pySpark ETL scripts is to create a `DevEndpoint', spin up and attach a Zeppelin notebook server to
-the endpoint, and edit and refine the scripts in the notebook. Make sure that the role for DevEndpoint has write access to 
-temporary directory paths used for relationalize and Redshift database specified later in your script. 
-You can set this up through the AWS Glue console, as described
-[here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/dev-endpoint-tutorial-prerequisites.html).
+The easiest way to debug your pySpark ETL scripts is to create a `DevEndpoint'
+and run your code there.  You can do this in the AWS Glue console, as described
+[here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/tutorial-development-endpoint-notebook.html).
 
 ### 3. Getting started
 
@@ -333,12 +330,18 @@ The output of the `printSchema` and `show` calls is:
     +---+-----+------------------------+-------------------------+
     | id|index|contact_details.val.type|contact_details.val.value|
     +---+-----+------------------------+-------------------------+
-    | 10|    0|                     fax|             202-224-6020|
-    | 10|    1|                   phone|             202-224-3744|
-    | 10|    2|                 twitter|            ChuckGrassley|
-    | 75|    0|                     fax|             202-224-4680|
-    | 75|    1|                   phone|             202-224-4642|
-    | 75|    2|                 twitter|              SenJackReed|
+    | 10|    0|                     fax|                         |
+    | 10|    1|                        |             202-225-1314|
+    | 10|    2|                   phone|                         |
+    | 10|    3|                        |             202-225-3772|
+    | 10|    4|                 twitter|                         |
+    | 10|    5|                        |          MikeRossUpdates|
+    | 75|    0|                     fax|                         |
+    | 75|    1|                        |             202-225-7856|
+    | 75|    2|                   phone|                         |
+    | 75|    3|                        |             202-225-2711|
+    | 75|    4|                 twitter|                         |
+    | 75|    5|                        |                SenCapito|
     +---+-----+------------------------+-------------------------+
 
 The `contact_details` field was an array of structs in the original DynamicFrame.
@@ -438,20 +441,26 @@ Now you can query these tables using SQL in Redshift:
 
 With this result:
 
-    id | index | contact_details.val.type | contact_details.val.value
-    ---+-------+--------------------------+---------------------------
-    10 |     0 | fax                      | 202-224-6020
-    10 |     1 | phone                    | 202-224-3744
-    10 |     2 | twitter                  | ChuckGrassley
-    75 |     0 | fax                      | 202-224-4680
-    75 |     1 | phone                    | 202-224-4642
-    75 |     2 | twitter                  | SenJackReed
-    (6 rows)
+     id | index | contact_details.val.type | contact_details.val.value
+    ----+-------+--------------------------+---------------------------
+     10 |     0 | fax                      |
+     10 |     1 |                          | 202-225-1314
+     10 |     2 | phone                    |
+     10 |     3 |                          | 202-225-3772
+     10 |     4 | twitter                  |
+     10 |     5 |                          | MikeRossUpdates
+     75 |     0 | fax                      |
+     75 |     1 |                          | 202-225-7856
+     75 |     2 | phone                    |
+     75 |     3 |                          | 202-225-2711
+     75 |     4 | twitter                  |
+     75 |     5 |                          | SenCapito
+    (12 rows)
 
 
 ### Conclusion
 
 Overall, AWS Glue is quite flexible allowing you to do in a few lines of code, what normally would take days to
 write. The entire source to target ETL scripts from end-to-end can be found in the accompanying Python file,
-`join_and_relationalize.py`.
+[join_and_relationalize.py](join_and_relationalize.py).
 

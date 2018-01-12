@@ -5,9 +5,9 @@ gives a tast of how useful AWS Glue's resolve-choice capability
 can be. This example expands on that and explores each of the
 strategies that the DynamicFrame's `resolveChoice` method offers.
 
-The associated Python file in the examples folder is:
+The associated Python file in the examples folder is: [resolve_choice.py](resolve_choice.py)
 
-    resolve_choices.py
+A Scala version of the script corresponding to this example can be found in the file: [ResolveChoice.scala](ResolveChoice.scala)
 
 We set up for this example in the same way we did for the data-cleaning
 sample.
@@ -25,31 +25,15 @@ This modified file can be found in:
 The first step is to crawl this data and put the results into a database called `payments`
 in your Data Catalog, as described [here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/console-crawlers.html).
 The crawler will read the first 2 MB of data from that file and create one table, `medicare`,
-in the `payments` database in the AWS Glue Data Catalog.
+in the `payments` datebase in the Data Catalog.
 
-The schema for the `medicare` table in the AWS Glue Data Catalog is as follows:
 
-```
-Column  name                            Data type
-==================================================
-drg definition                          string
-provider id                             bigint
-provider name                           string
-provider street address                 string
-provider city                           string
-provider state                          string
-provider zip code                       bigint
-hospital referral region description    string
-total discharges                        bigint
-average covered charges                 string
-average total payments                  string
-average medicare payments               string
-```
+### 2. Spin up a DevEndpoint to work with
 
-### 2. Spin up a DevEndpoint and notebook to work with
-An easy way to debug your pySpark ETL scripts is to create a `DevEndpoint', spin up and attach a Zeppelin notebook server to
-the endpoint, and edit and refine the scripts in the notebook. You can set this up through the AWS Glue console, as described
+The easiest way to debug pySpark ETL scripts is to create a `DevEndpoint'
+and run your code there.  You can do this in the AWS Glue console, as described
 [here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/tutorial-development-endpoint-notebook.html).
+
 
 ### 3. Getting started
 
@@ -70,7 +54,8 @@ the spark session variable for executing Spark SQL queries later in this script.
 
 ### 4. Revisiting the `string`-`int` choice type in the data
 
-Now, let's look at the schema that a DynamicFrame generates:
+Now, let's look at the schema after we load all the data into a DynamicFrame,
+starting from the metadata that the crawler put in the AWS Glue Data Catalog:
 
     medicare_dyf = glueContext.create_dynamic_frame.from_catalog(
            database = "payments",
@@ -95,19 +80,17 @@ The output from `printSchema` this time is:
     |-- average total payments: string
     |-- average medicare payments: string
 
-The DynamicFrame generates a schema in which `provider id` could be either a `long`
-or a `string`, whereas the DataFrame schema lists `Provider Id` as being a `string`,
-and the Data Catalog lists `provider id` as being a `bigint`.
-
+The DynamicFrame generated a schema in which `provider id` could be either a `long`
+or a 'string', whereas the DataFrame schema listed `Provider Id` as being a `string`.
 Which one is right? Well, it turns out there are two records (out of 160K records)
 at the end of the file with strings in that column (these are the erroneous records
 that we introduced to illustrate our point).
 
 As we saw in the [Data Cleaning](data_cleaning_and_lambda.md) sample, DynamicFrames
-have the notion of a `choice` type. In this case, both `long` and `string` may appear
-in the `provider id` column. The AWS Glue crawler misses the `string` type
-because it only considers a 2MB prefix of the data. The Spark DataFrame considers the
-whole dataset, but is forced to assign the most general type to the column (`string`).
+has the notion of a `choice` type. In this case, both `long` and `string` may appear
+in the 'provider id' column. The AWS Glue crawler missed the `string` type
+because it only considered a 2MB prefix of the data. The Spark DataFrame considered the
+whole dataset, but was forced to assign the most general type to the column (`string`).
 In fact, Spark often resorts to the most general case when there are complex types or
 variations with which it is unfamiliar.
 
@@ -179,7 +162,6 @@ and `provider id_string`:
 
 The resulting schema is:
 
-```
   root
   |-- drg definition: string
   |-- provider id_long: long
@@ -194,7 +176,7 @@ The resulting schema is:
   |-- average total payments: string
   |-- average medicare payments: string
   |-- provider id_string: string
-```
+
   
 #### The `make_struct` option
 Using `make_struct` turns the choice column's type into a struct
@@ -221,7 +203,7 @@ The resulting schema is:
     |-- average total payments: string
     |-- average medicare payments: string
 
-### 4. Executing Spark SQL queries
+### 4. Executing Spark SQL on a Spark DataFrame
 
 Finally, let's execute some SQL queries. For this, we can convert the
 DynamicFrame into a Spark DataFrame using the toDF method.
