@@ -499,6 +499,20 @@ class HiveMetastoreTransformer:
             *[udf(column).alias(new_column_name) if column == column_to_modify else column for column in df.columns])
 
     @staticmethod
+    def s3a_or_s3n_to_s3_in_location(df, location_col_name):
+        """
+        For a dataframe with a column containing location strings, for any location "s3a://..." or "s3n://...", replace
+        them with "s3://...". 
+        :param df: dataframe
+        :param location_col_name: the name of the column containing location, must be string type
+        :return: dataframe with location columns where all "s3a" or "s3n" protocols are replaced by "s3"
+        """
+        udf = UserDefinedFunction(
+            lambda location: None if location is None else re.sub(r'^s3[a|n]:\/\/', 's3://', location),
+            StringType())
+        return HiveMetastoreTransformer.modify_column_by_udf(df=df, udf=udf, column_to_modify=location_col_name)
+
+    @staticmethod
     def add_prefix_to_column(df, column_to_modify, prefix):
         if prefix is None or prefix == '':
             return df
@@ -617,8 +631,7 @@ class HiveMetastoreTransformer:
     def transform_param_value(self, df):
         udf_escape_chars = UserDefinedFunction(HiveMetastoreTransformer.udf_escape_chars, StringType())
 
-        return df.select('*',
-                         udf_escape_chars('PARAM_VALUE').alias('PARAM_VALUE_ESCAPED'))\
+        return df.select('*', udf_escape_chars('PARAM_VALUE').alias('PARAM_VALUE_ESCAPED'))\
             .drop('PARAM_VALUE')\
             .withColumnRenamed('PARAM_VALUE_ESCAPED', 'PARAM_VALUE')
 
@@ -654,7 +667,9 @@ class HiveMetastoreTransformer:
                                          new_column_name='skewedInfo') \
             .join(other=sort_columns, on='SD_ID', how='left_outer')
 
-        storage_descriptors_renamed = storage_descriptors_joined.rename_columns(rename_tuples=[
+        storage_descriptors_s3_location_fixed = \
+            HiveMetastoreTransformer.s3a_or_s3n_to_s3_in_location(storage_descriptors_joined, 'LOCATION')
+        storage_descriptors_renamed = storage_descriptors_s3_location_fixed.rename_columns(rename_tuples=[
             ('INPUT_FORMAT', 'inputFormat'),
             ('OUTPUT_FORMAT', 'outputFormat'),
             ('LOCATION', 'location'),
