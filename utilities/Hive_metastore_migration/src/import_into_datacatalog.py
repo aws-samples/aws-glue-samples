@@ -35,11 +35,8 @@ def transform_df_to_catalog_import_schema(sql_context, glue_context, df_database
 
 def import_datacatalog(sql_context, glue_context, datacatalog_name, databases, tables, partitions, region):
 
-    # TEMP: get around datacatalog writer performance issue
-    limited_partitions = partitions.limit(10)
-
     (dyf_databases, dyf_tables, dyf_partitions) = transform_df_to_catalog_import_schema(
-        sql_context, glue_context, databases, tables, limited_partitions)
+        sql_context, glue_context, databases, tables, partitions)
 
     # load
     glue_context.write_dynamic_frame.from_options(

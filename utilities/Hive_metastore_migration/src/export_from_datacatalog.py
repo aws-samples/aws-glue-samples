@@ -27,9 +27,9 @@ def transform_catalog_to_df(dyf):
 def datacatalog_migrate_to_s3(databases, tables, partitions, output_path):
 
     # load
-    coalesce_by_row_count(databases).write.format('json').mode('overwrite').save(output_path + 'databases')
-    coalesce_by_row_count(tables).write.format('json').mode('overwrite').save(output_path + 'tables')
-    coalesce_by_row_count(partitions).write.format('json').mode('overwrite').save(output_path + 'partitions')
+    databases.write.format('json').mode('overwrite').save(output_path + 'databases')
+    tables.write.format('json').mode('overwrite').save(output_path + 'tables')
+    partitions.write.format('json').mode('overwrite').save(output_path + 'partitions')
 
 
 # apply hard-coded schema on dataframes, ensure schema is consistent for transformations

@@ -225,20 +225,6 @@ def join_other_to_single_column(df, other, on, how, new_column_name):
     return df.join(other=other_combined, on=on, how=how)
 
 
-def coalesce_by_row_count(df, desired_rows_per_partition=10):
-    """
-    Coalesce dataframe to reduce number of partitions, to avoid fragmentation of data
-    :param df: dataframe
-    :param desired_rows_per_partition: desired number of rows per partition, there is no guarantee the actual rows count
-    is larger or smaller
-    :type df: DataFrame
-    :return: dataframe coalesced
-    """
-    count = df.count()
-    partitions = count / desired_rows_per_partition + 1
-    return df.coalesce(partitions)
-
-
 def batch_items_within_partition(sql_context, df, key_col, value_col, values_col):
     """
     Group a DataFrame of key, value pairs, create a list of values for the same key in each spark partition, but there
@@ -1432,9 +1418,9 @@ def etl_from_metastore(sc, sql_context, db_prefix, table_prefix, hive_metastore,
     # load
     output_path = get_output_dir(options['output_path'])
 
-    coalesce_by_row_count(databases).write.format('json').mode('overwrite').save(output_path + 'databases')
-    coalesce_by_row_count(tables).write.format('json').mode('overwrite').save(output_path + 'tables')
-    coalesce_by_row_count(partitions).write.format('json').mode('overwrite').save(output_path + 'partitions')
+    databases.write.format('json').mode('overwrite').save(output_path + 'databases')
+    tables.write.format('json').mode('overwrite').save(output_path + 'tables')
+    partitions.write.format('json').mode('overwrite').save(output_path + 'partitions')
 
 
 def etl_to_metastore(sc, sql_context, hive_metastore, options):
