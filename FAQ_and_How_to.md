@@ -107,11 +107,22 @@ b. **How do I do filtering in DynamicFrames?**
                                          {"age": {">": 21}},
                                          "adults", "youths")
 
-    You can access these by indexing into the frame_collection. For instance,
-    `frame_collection['adults']` returns the DynamicFrame containing all records
-    with `age > 21`.
+  You can access these by indexing into the frame_collection. For instance,
+  `frame_collection['adults']` returns the DynamicFrame containing all records
+  with `age > 21`.
 
-     It is possible to perform more sophisticated filtering by converting to a     DataFrame and then using the filter method. For instance, the query above     could be expressed as:     ```     result = my_dynamic_frame.toDF().filter("age > 21")     new_dynamic_frame = DynamicFrame.fromDF(result, glueContext, "new_dynamic_frame")     ```     More information about Spark SQL's filter syntax can be found in the [Spark SQL     Programming Guide](https://spark.apache.org/docs/2.1.0/sql-programming-guide.html).c. **Can I use a lambda function with a DynamicFrame?**  Lambda functions and other user-defined functions are currently only supported
+  It is possible to perform more sophisticated filtering by converting to a
+  DataFrame and then using the filter method. For instance, the query above
+  could be expressed as:
+
+     result = my_dynamic_frame.toDF().filter("age > 21")
+     new_dynamic_frame = DynamicFrame.fromDF(result, glueContext, "new_dynamic_frame")
+
+  More information about Spark SQL's filter syntax can be found in the [Spark SQL
+  Programming Guide](https://spark.apache.org/docs/2.1.0/sql-programming-guide.html).
+
+c. **Can I use a lambda function with a DynamicFrame?**
+  Lambda functions and other user-defined functions are currently only supported
   using SparkSQL DataFrames. You can convert a DynamicFrame to a DataFrame using
   the `toDF()` method and then specify Python functions (including lambdas) when
   calling methods like `foreach`. More information about methods on DataFrames
@@ -241,7 +252,7 @@ a. *How do I create a Python library and use it with Glue?*
    or if they are in some hierarchy, you can create a `zip` archive of the files and just pass the
    archive as the `extra python files` in the Job option.
 
-b. *How do I create a Java library and use it with Glue?
+b. *How do I create a Java library and use it with Glue?*
 
    It is not a typical use case to write to java function and invoke it in Python. However, it is
    possible to invoke a java function from Python as follows:
