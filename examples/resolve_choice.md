@@ -1,7 +1,7 @@
 # Exploring the `resolveChoice` Method
 
 The [Data Cleaning](data_cleaning_and_lambda.md) sample 
-gives a tast of how useful AWS Glue's resolve-choice capability
+gives a taste of how useful AWS Glue's resolve-choice capability
 can be. This example expands on that and explores each of the
 strategies that the DynamicFrame's `resolveChoice` method offers.
 
