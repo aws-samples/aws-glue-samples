@@ -4,10 +4,6 @@ This repository has samples that demonstrate various aspects of the new
 [AWS Glue](https://aws.amazon.com/glue) service, as well as various
 AWS Glue utilities.
 
-These are all licensed under the [Amazon Software License](http://aws.amazon.com/asl/)
-(the "License"). They may not be used except in compliance with the License, a copy
-of which is included here in the LICENSE file.
-
 You can find the AWS Glue open-source Python libraries in a separate
 repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs).
 
@@ -43,3 +39,7 @@ repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs)
 
    These scripts can undo or redo the results of a crawl under
    some circumstances.
+
+## License Summary
+
+This sample code is made available under the MIT-0 license. See the LICENSE file.
