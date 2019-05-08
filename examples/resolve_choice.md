@@ -131,8 +131,8 @@ call is now:
 We could also project the long values and discard the string values using the
 `project:long` option:
 
-  med_resolve_project = medicare_dyf.resolveChoice(specs = [('provider id','project:long')])
-  med_resolve_project.printSchema()
+  `med_resolve_project = medicare_dyf.resolveChoice(specs = [('provider id','project:long')])
+  med_resolve_project.printSchema()`
   
 Again, the schema now shows that the 'provider id' column only contains long values:
 
@@ -162,7 +162,7 @@ and `provider id_string`:
 
 The resulting schema is:
 
-  root
+  `root
   |-- drg definition: string
   |-- provider id_long: long
   |-- provider name: string
@@ -175,7 +175,7 @@ The resulting schema is:
   |-- average covered charges: string
   |-- average total payments: string
   |-- average medicare payments: string
-  |-- provider id_string: string
+  |-- provider id_string: string`
 
   
 #### The `make_struct` option
