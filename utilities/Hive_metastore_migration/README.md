@@ -1,5 +1,8 @@
 # Migration between the Hive Metastore and the AWS Glue Data Catalog
 
+Note: This is a sample script, not supported by AWS officially.
+We recommend you to test and modify it for your data and use-case.
+
 ### Introduction
 
 The provided scripts migrate metadata between Hive metastore and AWS Glue Data Catalog. The following scenarios are
