@@ -12,6 +12,9 @@ RUN tar -xzf spark-2.4.3-bin-without-hadoop.tgz && \
     rm spark-2.4.3-bin-without-hadoop.tgz
 RUN mvn dependency:copy-dependencies -DoutputDirectory=/opt/spark/jars/
 
+RUN curl -o ./httpclient-4.5.9.jar http://repo.maven.apache.org/maven2/org/apache/httpcomponents/httpclient/4.5.9/httpclient-4.5.9.jar
+RUN mv httpclient-4.5.9.jar /opt/spark/jars/
+
 RUN echo $'\n\
 spark.eventLog.enabled                      true\n\
 spark.history.ui.port                       18080\n\
