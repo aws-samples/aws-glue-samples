@@ -216,7 +216,7 @@ The output from the `show` call is:
 
 These are all still strings in the data. We can use the DynamicFrame's powerful
 `apply_mapping` tranform method to drop, rename, cast, and nest
-the data so that other data programming langages and sytems can
+the data so that other data programming languages and sytems can
 easily access it:
 
     medicare_tmp_dyf = DynamicFrame.fromDF(medicare_dataframe, glueContext, "nested")
