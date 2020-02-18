@@ -219,6 +219,7 @@ These are all still strings in the data. We can use the DynamicFrame's powerful
 the data so that other data programming languages and sytems can
 easily access it:
 
+    from awsglue.dynamicframe import DynamicFrame
     medicare_tmp_dyf = DynamicFrame.fromDF(medicare_dataframe, glueContext, "nested")
     medicare_nest_dyf = medicare_tmp_dyf.apply_mapping([('drg definition', 'string', 'drg', 'string'),
                      ('provider id', 'long', 'provider.id', 'long'),
