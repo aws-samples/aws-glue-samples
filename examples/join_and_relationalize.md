@@ -38,7 +38,7 @@ This is a semi-normalized collection of tables containing legislators and their 
 
 The easiest way to debug your pySpark ETL scripts is to create a `DevEndpoint'
 and run your code there.  You can do this in the AWS Glue console, as described
-[here in the Developer Guide](https://docs.aws.amazon.com/glue/latest/dg/dev-endpoint-tutorial-prerequisites.html). Make sure to follow instruction under section "Creating a Development Endpoint with a VPC".
+[here in the Developer Guide](https://docs.aws.amazon.com/glue/latest/dg/dev-endpoint-tutorial-prerequisites.html). Make sure to follow instruction under section "Creating a Development Endpoint for Amazon S3 Data".
 
 ### 3. Getting started
 
