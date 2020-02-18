@@ -118,7 +118,7 @@ In fact, Spark often resorts to the most general case when there are complex typ
 variations with which it is unfamiliar.
 
 To query the `provider id` column, we first need to resolve the choice. With DynamicFrames,
-we can try to convert those `string` values to `long` values uaing the `resolveChoice`
+we can try to convert those `string` values to `long` values using the `resolveChoice`
 transform method with a `cast:long` option:
 
     medicare_res = medicare_dynamicframe.resolveChoice(specs = [('provider id','cast:long')])
