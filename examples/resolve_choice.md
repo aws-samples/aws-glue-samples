@@ -162,20 +162,20 @@ and `provider id_string`:
 
 The resulting schema is:
 
-  root
-  |-- drg definition: string
-  |-- provider id_long: long
-  |-- provider name: string
-  |-- provider street address: string
-  |-- provider city: string
-  |-- provider state: string
-  |-- provider zip code: long
-  |-- hospital referral region description: string
-  |-- total discharges: long
-  |-- average covered charges: string
-  |-- average total payments: string
-  |-- average medicare payments: string
-  |-- provider id_string: string
+    root
+    |-- drg definition: string
+    |-- provider id_long: long
+    |-- provider name: string
+    |-- provider street address: string
+    |-- provider city: string
+    |-- provider state: string
+    |-- provider zip code: long
+    |-- hospital referral region description: string
+    |-- total discharges: long
+    |-- average covered charges: string
+    |-- average total payments: string
+    |-- average medicare payments: string
+    |-- provider id_string: string
 
   
 #### The `make_struct` option
