@@ -24,9 +24,10 @@ This modified file can be found in:
 
 The first step is to crawl this data and put the results into a database called `payments`
 in your Data Catalog, as described [here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/console-crawlers.html).
-The crawler will read the first 2 MB of data from that file and create one table, `medicare`,
-in the `payments` datebase in the Data Catalog.
+Please make sure that you use `s3://awsglue-datasets/examples/medicare/` in the include path, and choose `payments` in the database in the Add crawler wizard.
 
+The crawler will read the first 2 MB of data from that file, and recognize the schema.
+After that, the crawler will create one table, `medicare`, in the `payments` datebase in the Data Catalog.
 
 ### 2. Spin up a DevEndpoint to work with
 
