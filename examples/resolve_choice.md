@@ -131,8 +131,8 @@ call is now:
 We could also project the long values and discard the string values using the
 `project:long` option:
 
-  med_resolve_project = medicare_dyf.resolveChoice(specs = [('provider id','project:long')])
-  med_resolve_project.printSchema()
+    med_resolve_project = medicare_dyf.resolveChoice(specs = [('provider id','project:long')])
+    med_resolve_project.printSchema()
   
 Again, the schema now shows that the 'provider id' column only contains long values:
 
