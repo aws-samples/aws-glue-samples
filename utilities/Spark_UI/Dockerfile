@@ -11,6 +11,9 @@ RUN tar -xzf spark-2.4.3-bin-without-hadoop.tgz && \
     mv spark-2.4.3-bin-without-hadoop /opt/spark && \
     rm spark-2.4.3-bin-without-hadoop.tgz
 RUN mvn dependency:copy-dependencies -DoutputDirectory=/opt/spark/jars/
+RUN rm /opt/spark/jars/servlet-api-2.5.jar && \
+    rm /opt/spark/jars/jsr305-1.3.9.jar && \
+    rm /opt/spark/jars/jersey-*-1.9.jar
 
 RUN echo $'\n\
 spark.eventLog.enabled                      true\n\
