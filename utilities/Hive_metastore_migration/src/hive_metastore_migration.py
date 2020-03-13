@@ -1462,7 +1462,7 @@ def validate_aws_regions(region):
         return
 
     aws_glue_regions = [
-        'ap-northeast-1' # Tokyo
+        'ap-northeast-1', # Tokyo
         'eu-west-1', # Ireland
         'us-east-1', # North Virginia
         'us-east-2', # Ohio
