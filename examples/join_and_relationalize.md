@@ -13,7 +13,7 @@ A Scala version of the script corresponding to this example can be found in the 
 The dataset we'll be using in this example was downloaded from the [EveryPolitician](http://everypolitician.org)
 website into our sample-dataset bucket in S3, at:
 
-    s3://awsglue-datasets/examples/us-legislators.
+    s3://awsglue-datasets/examples/us-legislators
 
 It contains data in JSON format about United States legislators and the seats they have held
 in the the House of Representatives and the Senate.
