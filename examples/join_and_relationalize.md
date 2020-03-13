@@ -13,7 +13,7 @@ A Scala version of the script corresponding to this example can be found in the 
 The dataset we'll be using in this example was downloaded from the [EveryPolitician](http://everypolitician.org)
 website into our sample-dataset bucket in S3, at:
 
-    s3://awsglue-datasets/examples/us-legislators.
+    s3://awsglue-datasets/examples/us-legislators
 
 It contains data in JSON format about United States legislators and the seats they have held
 in the the House of Representatives and the Senate.
@@ -38,7 +38,7 @@ This is a semi-normalized collection of tables containing legislators and their 
 
 The easiest way to debug your pySpark ETL scripts is to create a `DevEndpoint'
 and run your code there.  You can do this in the AWS Glue console, as described
-[here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/tutorial-development-endpoint-notebook.html).
+[here in the Developer Guide](https://docs.aws.amazon.com/glue/latest/dg/dev-endpoint-tutorial-prerequisites.html). Make sure to follow instruction under section "Creating a Development Endpoint for Amazon S3 Data".
 
 ### 3. Getting started
 

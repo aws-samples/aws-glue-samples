@@ -24,9 +24,10 @@ This modified file can be found in:
 
 The first step is to crawl this data and put the results into a database called `payments`
 in your Data Catalog, as described [here in the Developer Guide](http://docs.aws.amazon.com/glue/latest/dg/console-crawlers.html).
-The crawler will read the first 2 MB of data from that file and create one table, `medicare`,
-in the `payments` datebase in the Data Catalog.
+Please make sure that you use `s3://awsglue-datasets/examples/medicare/` in the include path, and choose `payments` in the database in the Add crawler wizard.
 
+The crawler will read the first 2 MB of data from that file, and recognize the schema.
+After that, the crawler will create one table, `medicare`, in the `payments` datebase in the Data Catalog.
 
 ### 2. Spin up a DevEndpoint to work with
 
@@ -118,7 +119,7 @@ In fact, Spark often resorts to the most general case when there are complex typ
 variations with which it is unfamiliar.
 
 To query the `provider id` column, we first need to resolve the choice. With DynamicFrames,
-we can try to convert those `string` values to `long` values uaing the `resolveChoice`
+we can try to convert those `string` values to `long` values using the `resolveChoice`
 transform method with a `cast:long` option:
 
     medicare_res = medicare_dynamicframe.resolveChoice(specs = [('provider id','cast:long')])
@@ -216,9 +217,10 @@ The output from the `show` call is:
 
 These are all still strings in the data. We can use the DynamicFrame's powerful
 `apply_mapping` tranform method to drop, rename, cast, and nest
-the data so that other data programming langages and sytems can
+the data so that other data programming languages and sytems can
 easily access it:
 
+    from awsglue.dynamicframe import DynamicFrame
     medicare_tmp_dyf = DynamicFrame.fromDF(medicare_dataframe, glueContext, "nested")
     medicare_nest_dyf = medicare_tmp_dyf.apply_mapping([('drg definition', 'string', 'drg', 'string'),
                      ('provider id', 'long', 'provider.id', 'long'),
