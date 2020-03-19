@@ -42,13 +42,12 @@ Begin by pasting some boilerplate into the DevEndpoint notebook to import the
 AWS Glue libraries we'll need and set up a single `GlueContext`.
 
     import sys
-    from awsglue.transforms import *
     from awsglue.utils import getResolvedOptions
     from pyspark.context import SparkContext
     from awsglue.context import GlueContext
+    from awsglue.dynamicframe import DynamicFrame
     from awsglue.job import Job
-    from pyspark.sql import SparkSession
-
+    
     glueContext = GlueContext(SparkContext.getOrCreate())
 
 

@@ -42,12 +42,11 @@ AWS Glue libraries we'll need and set up a single `GlueContext`. We also initial
 the spark session variable for executing Spark SQL queries later in this script.
 
     import sys
-    from awsglue.transforms import *
     from awsglue.utils import getResolvedOptions
     from pyspark.context import SparkContext
     from awsglue.context import GlueContext
+    from awsglue.dynamicframe import DynamicFrame
     from awsglue.job import Job
-    from pyspark.sql import SparkSession
 
     glueContext = GlueContext(SparkContext.getOrCreate())
     spark = glueContext.spark_session

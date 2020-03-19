@@ -1,8 +1,8 @@
-#  Copyright 2016-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  Copyright 2016-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: MIT-0
 
 import sys
-from awsglue.transforms import *
+from awsglue.transforms import Join
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
@@ -36,26 +36,26 @@ l_history = Join.apply(orgs, Join.apply(persons, memberships, 'id', 'person_id')
 # ---- Write out the history ----
 
 # Write out the dynamic frame into parquet in "legislator_history" directory
-print "Writing to /legislator_history ..."
+print("Writing to /legislator_history ...")
 glueContext.write_dynamic_frame.from_options(frame = l_history, connection_type = "s3", connection_options = {"path": output_history_dir}, format = "parquet")
 
 # Write out a single file to directory "legislator_single"
 s_history = l_history.toDF().repartition(1)
-print "Writing to /legislator_single ..."
+print("Writing to /legislator_single ...")
 s_history.write.parquet(output_lg_single_dir)
 
 # Convert to data frame, write to directory "legislator_part", partitioned by (separate) Senate and House.
-print "Writing to /legislator_part, partitioned by Senate and House ..."
+print("Writing to /legislator_part, partitioned by Senate and House ...")
 l_history.toDF().write.parquet(output_lg_partitioned_dir, partitionBy=['org_name'])
 
 # ---- Write out to relational databases ----
 
 # Convert the data to flat tables
-print "Converting to flat tables ..."
+print("Converting to flat tables ...")
 dfc = l_history.relationalize("hist_root", redshift_temp_dir)
 
 # Cycle through and write to Redshift.
 for df_name in dfc.keys():
     m_df = dfc.select(df_name)
-    print "Writing to Redshift table: ", df_name, " ..."
+    print("Writing to Redshift table: ", df_name, " ...")
     glueContext.write_dynamic_frame.from_jdbc_conf(frame = m_df, catalog_connection = "redshift3", connection_options = {"dbtable": df_name, "database": "testdb"}, redshift_tmp_dir = redshift_temp_dir)

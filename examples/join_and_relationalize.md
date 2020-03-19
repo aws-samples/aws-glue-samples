@@ -53,7 +53,7 @@ Begin by pasting some boilerplate into the DevEndpoint notebook to import the
 AWS Glue libraries we'll need and set up a single `GlueContext`.
 
     import sys
-    from awsglue.transforms import *
+    from awsglue.transforms import Join
     from awsglue.utils import getResolvedOptions
     from pyspark.context import SparkContext
     from awsglue.context import GlueContext
@@ -68,7 +68,7 @@ Next, you can easily examine the schemas that the crawler recorded in the Data C
 to see the schema of the `persons_json` table, enter the following in your notebook:
 
     persons = glueContext.create_dynamic_frame.from_catalog(database="legislators", table_name="persons_json")
-    print "Count: ", persons.count()
+    print("Count: ", persons.count())
     persons.printSchema()
 
 Here's the output from the print calls:
@@ -110,7 +110,7 @@ Each person in the table is a member of some congressional body.
 To look at the schema of the `memberships_json` table, enter the following:
 
     memberships = glueContext.create_dynamic_frame.from_catalog(database="legislators", table_name="memberships_json")
-    print "Count: ", memberships.count()
+    print("Count: ", memberships.count())
     memberships.printSchema()
 
 The output is:
@@ -130,7 +130,7 @@ Organizations are parties and the two chambers of congress, the Senate and House
 To look at the schema of the `organizations_json` table, enter:
 
     orgs = glueContext.create_dynamic_frame.from_catalog(database="legislators", table_name="organizations_json")
-    print "Count: ", orgs.count()
+    print("Count: ", orgs.count())
     orgs.printSchema()
 
 The output is:
@@ -219,7 +219,7 @@ We can do all these operations in one (extended) line of code:
     l_history = Join.apply(orgs,
                            Join.apply(persons, memberships, 'id', 'person_id'),
                            'org_id', 'organization_id').drop_fields(['person_id', 'org_id'])
-    print "Count: ", l_history.count()
+    print("Count: ", l_history.count())
     l_history.printSchema()
 
 The output is:
