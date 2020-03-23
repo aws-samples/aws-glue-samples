@@ -14,13 +14,15 @@ For example, the first line of the following snippet converts the DynamicFrame
 called "datasource0" to a DataFrame and then repartitions it to a single
 partition. The second line converts it back to a DynamicFrame for further
 processing in AWS Glue.
+    
+```python
+# Convert to a dataframe and partition based on "partition_col"
+partitioned_dataframe = datasource0.toDF().repartition(1)
 
-    # Convert to a dataframe and partition based on "partition_col"
-    partitioned_dataframe = datasource0.toDF().repartition(1)
-
-    # Convert back to a DynamicFrame for further processing.
-    partitioned_dynamicframe = DynamicFrame.fromDF(partitioned_dataframe, glueContext, "partitioned_df")
-
+# Convert back to a DynamicFrame for further processing.
+partitioned_dynamicframe = DynamicFrame.fromDF(partitioned_dataframe, glueContext, "partitioned_df")
+```
+    
 You can also pass the name of a column to the repartition method to use that field as
 a partitioning key. This may help performance in certain cases where there is benefit
 in co-locating data. Note that while different records with the same value for this
@@ -37,10 +39,12 @@ a. **How can I convert to a data frame?**
   transformation called
   [ResolveChoice](http:docs.aws.amazon.com/glue/latest/dg/aws-glue-api-crawler-pyspark-transforms-ResolveChoice.html)
   with the following signature:
-
-     ResolveChoice.apply(self, frame, specs = None, choice = "",
-                         transformation_ctx = "", info = "",
-                         stageThreshold = 0, totalThreshold = 0)
+  
+  ```python
+  ResolveChoice.apply(self, frame, specs = None, choice = "",
+                      transformation_ctx = "", info = "",
+                      stageThreshold = 0, totalThreshold = 0)
+  ```
 
   This transformation provides you two general ways to resolve choice types in a DynamicFrame.
 
@@ -88,11 +92,13 @@ a. **How can I use SQL queries with DynamicFrames?**
   to convert the DynamicFrame to a DataFrame, issue a SQL query, and then
   convert back to a DynamicFrame.
 
-      df = my_dynamic_frame.toDF()
-      df.createOrReplaceTempView("temptable")
-      sql_df = spark.sql("SELECT * FROM temptable")
-      new_dynamic_frame = DynamicFrame.fromDF(sql_df, glueContext, "new_dynamic_frame")
-
+  ```python
+  df = my_dynamic_frame.toDF()
+  df.createOrReplaceTempView("temptable")
+  sql_df = spark.sql("SELECT * FROM temptable")
+  new_dynamic_frame = DynamicFrame.fromDF(sql_df, glueContext, "new_dynamic_frame")
+  ```
+  
   Note that we assign the `spark` variable at the start of generated scripts
   for convenience, but if you modify your script and delete this variable,
   you can also reference the SparkSession using `glueContext.spark_session`.
@@ -103,15 +109,30 @@ b. **How do I do filtering in DynamicFrames?**
   partitions it into two new DynamicFrames based on a predicate. For example,
   the snippet partition my_dynamic_frame into two frames called "adults" and "youths".:
 
-      frame_collection = SplitRows.apply(my_dynamic_frame,
-                                         {"age": {">": 21}},
-                                         "adults", "youths")
+  ```python
+  frame_collection = SplitRows.apply(my_dynamic_frame,
+                                     {"age": {">": 21}},
+                                     "adults", "youths")
+  ```
 
-    You can access these by indexing into the frame_collection. For instance,
-    `frame_collection['adults']` returns the DynamicFrame containing all records
-    with `age > 21`.
+  You can access these by indexing into the frame_collection. For instance,
+  `frame_collection['adults']` returns the DynamicFrame containing all records
+  with `age > 21`.
 
-     It is possible to perform more sophisticated filtering by converting to a     DataFrame and then using the filter method. For instance, the query above     could be expressed as:     ```     result = my_dynamic_frame.toDF().filter("age > 21")     new_dynamic_frame = DynamicFrame.fromDF(result, glueContext, "new_dynamic_frame")     ```     More information about Spark SQL's filter syntax can be found in the [Spark SQL     Programming Guide](https://spark.apache.org/docs/2.1.0/sql-programming-guide.html).c. **Can I use a lambda function with a DynamicFrame?**  Lambda functions and other user-defined functions are currently only supported
+   It is possible to perform more sophisticated filtering by converting to a
+   DataFrame and then using the filter method. For instance, the query above
+   could be expressed as:
+
+   ```python
+   result = my_dynamic_frame.toDF().filter("age > 21")
+   new_dynamic_frame = DynamicFrame.fromDF(result, glueContext, "new_dynamic_frame")
+   ```
+
+   More information about Spark SQL's filter syntax can be found in the [Spark SQL
+   Programming Guide](https://spark.apache.org/docs/2.1.0/sql-programming-guide.html).
+
+c. **Can I use a lambda function with a DynamicFrame?**
+  Lambda functions and other user-defined functions are currently only supported
   using SparkSQL DataFrames. You can convert a DynamicFrame to a DataFrame using
   the `toDF()` method and then specify Python functions (including lambdas) when
   calling methods like `foreach`. More information about methods on DataFrames
@@ -246,10 +267,12 @@ b. *How do I create a Java library and use it with Glue?
    It is not a typical use case to write to java function and invoke it in Python. However, it is
    possible to invoke a java function from Python as follows:
 
-       from py4j.java_gateway import java_import
-       java_import(sc._jvm, "com.amazonaws.glue.userjava.UserJava")
-       uj = sc._jvm.UserJava()
-       uj.foo()
+   ```python
+   from py4j.java_gateway import java_import
+   java_import(sc._jvm, "com.amazonaws.glue.userjava.UserJava")
+   uj = sc._jvm.UserJava()
+   uj.foo()
+   ```
 
    Provide the jar which has the class `com.amazonaws.glue.userjava.UserJava` using the `extra jars`
    options in the Job argument.
@@ -260,7 +283,9 @@ b. *How do I create a Java library and use it with Glue?
 With Spark 2.1, SparkSession is the recommended way to run SQL queries or create temporary table views.
 Here is an example of a SQL query that uses a SparkSession:
 
-     sql_df = spark.sql("SELECT * FROM temptable")
+```python
+sql_df = spark.sql("SELECT * FROM temptable")
+```
 
 To simplify using spark for registered jobs in AWS Glue, our code generator initializes the spark
 session in the `spark` variable similar to GlueContext and SparkContext.
