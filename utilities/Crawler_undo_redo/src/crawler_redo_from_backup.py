@@ -1,4 +1,4 @@
-# Copyright 2016-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2016-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
 from __future__ import print_function
@@ -7,11 +7,11 @@ import sys
 import argparse
 from awsglue.context import GlueContext
 from pyspark.context import SparkContext
-from awsglue.dynamicframe import DynamicFrame
-from awsglue.transforms import get_transform
-from pyspark.sql.types import *
-from scripts_utils import *
-from pyspark.sql.functions import *
+from scripts_utils import write_df_to_catalog, read_from_s3
+
+DEFAULT_CATALOG_ENDPOINT = 'datacatalog'
+DEFAULT_GLUE_ENDPOINT = 'glue'
+DEFAULT_REGION = 'us-east-1'
 
 def crawler_redo_from_backup(glue_context, **options):
     spark_ctxt = glue_context._instantiatedContext
