@@ -14,6 +14,7 @@ repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs)
    Helps you get started using the many ETL capabilities of AWS Glue, and
    answers some of the more common questions people have.
 
+### Examples
  - [Join and Relationalize Data in S3](examples/join_and_relationalize.md)
 
    This sample ETL script shows you how to use AWS Glue to load, transform,
@@ -30,6 +31,12 @@ repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs)
    This sample explores all four of the ways you can resolve choice types
    in a dataset using DynamicFrame's `resolveChoice` method.
 
+ - [Converting character encoding](examples/converting_char_encoding.md)
+ 
+   This sample ETL script shows you how to use AWS Glue job to convert character encoding.
+
+### Utilities
+
  - [Hive metastore migration](utilities/Hive_metastore_migration/README.md)
 
    This utility can help you migrate your Hive metastore to the
@@ -39,6 +46,17 @@ repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs)
 
    These scripts can undo or redo the results of a crawl under
    some circumstances.
+
+ - [Spark UI](utilities/Spark_UI/README.md)
+
+   You can use this Dockerfile to run Spark history server in your container.
+   See details: [Launching the Spark History Server and Viewing the Spark UI Using Docker ](https://docs.aws.amazon.com/glue/latest/dg/monitor-spark-ui-history.html#monitor-spark-ui-history-local)
+
+ - [use only IAM access controls](utilities/use_only_IAM_access_controls/README.md)
+ 
+   AWS Lake Formation applies its own permission model when you access data in Amazon S3 and metadata in AWS Glue Data Catalog through use of Amazon EMR, Amazon Athena and so on. 
+   If you currently use Lake Formation and instead would like to use only IAM Access controls, this tool enables you to achieve it.
+
 
 ## License Summary
 
