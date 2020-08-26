@@ -47,6 +47,10 @@ repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs)
    These scripts can undo or redo the results of a crawl under
    some circumstances.
 
+ - [sagemaker_notebook_automation](utilities/sagemaker_notebook_automation/README.md)
+ 
+   An AWS CloudFormation template to launch the SageMaker Notebook with Glue Development Endpoint.
+   
  - [Spark UI](utilities/Spark_UI/README.md)
 
    You can use this Dockerfile to run Spark history server in your container.
