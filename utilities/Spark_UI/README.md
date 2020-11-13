@@ -8,7 +8,7 @@ If you prefer local access (not to have EC2 instance for Apache Spark history se
 - Install Docker
 
 #### Build docker image
-1. Download a Dockerfile from GitHub
+1. Download a Dockerfile and pom file from GitHub
 2. Run commands shown below
     ``` 
         $ docker build -t glue/sparkui:latest . 
