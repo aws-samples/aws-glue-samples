@@ -105,9 +105,13 @@ while 'NextToken' in res:
 for p in permissions:
     if p['Principal']['DataLakePrincipalIdentifier'] != 'IAM_ALLOWED_PRINCIPALS':
         print('...Revoking permissions of ' + p['Principal']['DataLakePrincipalIdentifier'] + ' on table ' + d['Name'] + '...')
-        lakeformation.revoke_permissions(Principal=p['Principal'],
-                                         Resource=p['Resource'],
-                                         Permissions=p['Permissions'],
-                                         PermissionsWithGrantOption=p['PermissionsWithGrantOption'])
+        try:
+            lakeformation.revoke_permissions(Principal=p['Principal'],
+                                             Resource=p['Resource'],
+                                             Permissions=p['Permissions'],
+                                             PermissionsWithGrantOption=p['PermissionsWithGrantOption'])
+        except Exception as e:
+            print(e)
+
 
 print("Completed!")
