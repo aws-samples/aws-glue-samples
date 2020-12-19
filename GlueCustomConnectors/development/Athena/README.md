@@ -1,8 +1,10 @@
 ## Development Guide - AWS Glue custom connector with Athena federated query interface
 
-Glue ETL is adding support for custom connectors of various types, including Spark, Athena and JDBC. This module means to serve as a guided example for writing an Athena connector to be used by AWS Glue to query a custom data source (You can also use the same connector in Athena, more details can be found [here](https://github.com/awslabs/aws-athena-query-federation)). The goal is to help you understand the development process and point out capabilities. In some examples we use hard coded schemas to separate learning how to write a connector from learning how to interface with the target systems you ultimately want to federate to. 
+AWS Glue is adding support for custom connectors of various types and interfaces, including Spark, Athena federated query and JDBC. This document means to serve as a guided example for developing a Glue custom connector with Athena federated query interface to read and query from a custom data store. You can also use the same connector in Athena, more details can be found [here](https://github.com/awslabs/aws-athena-query-federation).
 
-**Please note that Glue doesn't support the User Defined Functions(UDFs), predicate push down of Athena connectors yet.**
+**Please note that Glue custom connectors with the Athena federated query interface do not require an AWS Lambda function to read the data from the underlying data store. They are plugged into the AWS Glue Spark runtime directly and execute inline within the Spark driver and executors to read the metadata and scane the data from the data sources.**
+
+Glue custom connectors with Athena federated query interface do not yet support the User Defined Functions (UDFs) and predicate push downs. This functionality would be available soon.
 
 
 ## What is a 'Connector'?
@@ -12,7 +14,7 @@ A 'connector' is a piece of code that can translate between your target data sou
 1. A source of meta-data for Athena to get schema information about what databases, tables, and columns your connector has. This is done by extending com.amazonaws.athena.connector.lambda.handlers.MetadataHandler in the athena-federation-sdk module. 
 2. A way for Athena to read the data stored in your tables. This is done by extending com.amazonaws.athena.connector.lambda.handlers.RecordHandler in the athena-federation-sdk module. 
 
-In order to use such a connector in Athena Query Federation, you would need to deploy it as a Lambda function. It's slight different in Glue, you will deploy the build artifact of this connector, upload it to S3 and create BYOC connector via Glue Studio to use it in the ETL job. More details about the end-to-end workflow can be found in this [doc](https://docs.aws.amazon.com/glue/latest/ug/connectors-chapter.html#creating-custom-connectors
+In order to use such a connector in Athena Query Federation, you would need to deploy the connector as a Lambda function. For Glue, you will not use the Lambda function to read metadata or data from the underlying data store. Instead, you simply build the artifact of this connector (JAR), upload it to S3 and create a BYOC connector using AWS Glue Studio to use it inline and read data in Apache Arrow format within a Glue Spark the ETL job. More details about the end-to-end workflow can be found in this [doc](https://docs.aws.amazon.com/glue/latest/ug/connectors-chapter.html#creating-custom-connectors
 ), here we focus on providing an example and run it locally.
 
 In the next section we take a closer look at the methods we must implement on the MetadataHandler and RecordHandler.
@@ -154,8 +156,8 @@ As of 12/21/2020, Glue supports Athena connectors built with `athena-federation-
 4. Complete the boiler plate code in ExampleRecordHandler in `ETLConnector/deveclopment/Athena` by uncommenting the provided example code and providing missing code where indicated.
 5. Upload our sample data by running the following command from aws-athena-query-federation/athena-example directory in the athena sdk repo. Be sure to replace BUCKET_NAME with the name of the bucket your created earlier.  `aws s3 cp ./sample_data.csv s3://BUCKET_NAME/2017/11/1/sample_data.csv`
 
-### Step 5: build and test your connector
-At this step, we're going to build the connector you just created and test it by running it locally.
+### Step 5: Build and test your connector
+At this step, we're going to build the connector you just created and test it by running it locally. In the example we use hard coded schemas to separate learning how to write a connector from learning how to interface with the target systems you ultimately want to federate to with AWS Glue custom connectors.
 1. change the working directory of your terminal to `aws-glue-samples/ETLConnector/development/Athena`, run `mvn install`. This command builds your connector and installs the resulting jar into your local maven repository.
 2. Build a local Scala environment with local Glue ETL maven library: [Developing Locally with Scala](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-libraries.html).
 3. Open your local Glue ETL library in IntelliJ and add the example connector jar as its dependencies by going to Project Structures -> Libraries -> New Project Library -> Java and supply the path to the connector jar, which should be at `/<your-path>/aws-glue-samples/ETLConnector/development/Athena/target/athena-example-1.0.jar`
@@ -214,5 +216,5 @@ root
 
 ### Step 6: Run a Glue ETL job using your connector!
 
-Ok, now you've built and tested a sample Athena connector. The next for your is to explore how to bring your connector to Glue ETL. You can check out our [doc](https://docs.aws.amazon.com/glue/latest/ug/connectors-chapter.html#creating-custom-connectors) that shows the step-by-step guide. Glue has already published a few connectors in AWS Marketplace, which you can easily plug into your ETL job. You can follow this [Marketplace subscription doc](https://docs.aws.amazon.com/marketplace/latest/buyerguide/buyer-subscribing-to-products.html) to find out how to do that.
+Ok, now you've built and tested a sample Athena connector. The next for your is to explore how to bring your connector to Glue ETL. You can check out our [doc](https://docs.aws.amazon.com/glue/latest/ug/connectors-chapter.html#creating-custom-connectors) that shows the step-by-step guide. Glue has already published a few connectors in AWS Marketplace using Athena interfaces described above, which you can easily plug into your ETL job. You can follow this [Marketplace subscription doc](https://docs.aws.amazon.com/marketplace/latest/buyerguide/buyer-subscribing-to-products.html) to find out how to do that.
 
