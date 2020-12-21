@@ -47,10 +47,6 @@ repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs)
    These scripts can undo or redo the results of a crawl under
    some circumstances.
 
- - [sagemaker_notebook_automation](utilities/sagemaker_notebook_automation/README.md)
- 
-   An AWS CloudFormation template to launch the SageMaker Notebook with Glue Development Endpoint.
-   
  - [Spark UI](utilities/Spark_UI/README.md)
 
    You can use this Dockerfile to run Spark history server in your container.
@@ -61,10 +57,26 @@ repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs)
    AWS Lake Formation applies its own permission model when you access data in Amazon S3 and metadata in AWS Glue Data Catalog through use of Amazon EMR, Amazon Athena and so on. 
    If you currently use Lake Formation and instead would like to use only IAM Access controls, this tool enables you to achieve it.
 
-### Glue Custom Connectors
+### GlueCustomConnectors
+ - [Development](GlueCustomConnectors/development/README.md)
 
-Coming soon.
+   Development guide with examples of connectors with simple, intermediate, and advanced functionalities. These examples demonstrate how to implement Glue Custom Connectors based on Spark Data Source or [Amazon Athena Federated Query](https://github.com/awslabs/aws-athena-query-federation) interfaces and plug them into Glue Spark runtime.
 
+ - [Local Validation Tests](GlueCustomConnectors/localValidation/README.md)
+
+   This user guide describes validation tests that you can run locally on your laptop to integrate your connector with Glue Spark runtime.
+   
+ - [Validation](GlueCustomConnectors/glueJobValidation/README.md)
+
+   This user guide shows how to validate connectors with Glue Spark runtime in a Glue job system before deploying them for your workloads.
+
+ - [Glue Spark Script Examples](GlueCustomConnectors/gluescripts/README.md)
+
+   Python scripts examples to use Spark, Amazon Athena and JDBC connectors with Glue Spark runtime.
+
+ - [Create and Publish Glue Connector to AWS Marketplace](GlueCustomConnectors/marketplace)
+
+   If you would like to partner or publish your Glue custom connector to AWS Marketplace, please refer to this guide and reach out to us at glue-connector-feedback@amazon.com for further details on your connector.
 
 ## License Summary
 
