@@ -58,6 +58,10 @@ repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs)
    If you currently use Lake Formation and instead would like to use only IAM Access controls, this tool enables you to achieve it.
 
 ### GlueCustomConnectors
+AWS Glue provides [built-in support](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-connect.html) for the most commonly used data stores such as Amazon Redshift, MySQL, MongoDB. Powered by Glue ETL Custom Connector, you can subscribe a third-party connector from AWS Marketplace or build your own connector to connect to data stores that are not natively supported.
+
+ ![marketplace](GlueCustomConnectors/marketplace.jpg)
+ 
  - [Development](GlueCustomConnectors/development/README.md)
 
    Development guide with examples of connectors with simple, intermediate, and advanced functionalities. These examples demonstrate how to implement Glue Custom Connectors based on Spark Data Source or [Amazon Athena Federated Query](https://github.com/awslabs/aws-athena-query-federation) interfaces and plug them into Glue Spark runtime.

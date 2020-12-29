@@ -7,8 +7,8 @@ This development guide shows you how to implement, test, and validate (locally a
 Users can also publish these connectors on [AWS Marketplace](https://aws.amazon.com/marketplace/search/results?searchTerms=glue%20connector&spellCheck=false) by following the [Creating Connectors for AWS Marketplace guide](marketplace/publishGuide.pdf). 
 
 Glue Spark runtime features such as job bookmarks for incremental loads, at-source data filtering with SQL queries, partitioning for data parallelism, data type mapping, advanced Spark and built-in AWS Glue data transformations, VPC networking, integration with AWS Secrets Manager to securely store authentication  credentials, and AWS Glue Data Catalog for storing connections and table metadata) are supported with these interfaces, and AWS Glue Studio console for visual authoring of ETL jobs.
+![marketplace](marketplace.jpg)
 
-![marketplace](marketplace.png)
 
 ### Development Guide 
 
