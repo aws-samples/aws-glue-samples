@@ -60,4 +60,4 @@ An example screenshot is also included for your reference.
     1. Expected schema and output schema.
     2. Expected data record count and output record count.
 
-3. Please reach out to us at glue-connector-feedback@amazon.com if you would like to partner or add your connector to AWS Marketplace. You can also reference the guide to [Publish your connectors to AWS Marketplace](marketplace/publishGuide.pdf)
+3. Please reach out to us at glue-connectors@amazon.com if you would like to partner or add your connector to AWS Marketplace. You can also reference the guide to [Publish your connectors to AWS Marketplace](marketplace/publishGuide.pdf)

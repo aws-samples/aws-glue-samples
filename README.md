@@ -80,7 +80,7 @@ AWS Glue provides [built-in support](https://docs.aws.amazon.com/glue/latest/dg/
 
  - [Create and Publish Glue Connector to AWS Marketplace](GlueCustomConnectors/marketplace)
 
-   If you would like to partner or publish your Glue custom connector to AWS Marketplace, please refer to this guide and reach out to us at glue-connector-feedback@amazon.com for further details on your connector.
+   If you would like to partner or publish your Glue custom connector to AWS Marketplace, please refer to this guide and reach out to us at glue-connectors@amazon.com for further details on your connector.
 
 ## License Summary
 
