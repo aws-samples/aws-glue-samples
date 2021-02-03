@@ -1,0 +1,226 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Glue SageMaker notebook
+
+Parameters:
+  NotebookName:
+    Type: String
+    Description: "Name may contain letters (A-Z), numbers(0-9), hyphens(-), or underscores(_)."
+  DevEndpointName:
+    Type: String
+    Description: "Dev Endpoint name which this notebook instance is attached to."
+  GlueServiceRoleARN:
+    Type: String
+    Description: "The Amazon Resource Name (ARN) of the IAM role used in this DevEndpoint."
+  WorkerType:
+    Type: String
+    Description: "The Glue worker type. "
+    AllowedValues:
+      - "G.1X"
+      - "G.2X"
+    Default: "G.1X"
+  NumberOfWorkers:
+    Type: Number
+    Description: "The number of Glue workers allocated to this DevEndpoint."
+    Default: 5
+
+
+Resources:
+  DevEndpoint:
+    Type: AWS::Glue::DevEndpoint
+    Properties:
+      EndpointName: !Ref DevEndpointName
+      WorkerType: !Ref WorkerType
+      NumberOfWorkers: !Ref NumberOfWorkers
+      GlueVersion: "1.0"
+      RoleArn: !Ref GlueServiceRoleARN
+      Arguments:
+        {
+          "--enable-glue-datacatalog": "",
+          "GLUE_PYTHON_VERSION": "3"
+        }
+  NotebookRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - sagemaker.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      RoleName: !Sub AWSGlueServiceSageMakerNotebookRole-${AWS::StackName}
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+      Policies:
+        -
+          PolicyName: "root"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub arn:aws-cn:s3:::aws-glue-jes-prod-${AWS::Region}-assets
+              -
+                Effect: "Allow"
+                Action:
+                  - s3:GetObject
+                Resource: !Sub arn:aws-cn:s3:::aws-glue-jes-prod-${AWS::Region}-assets*
+              -
+                Effect: "Allow"
+                Action:
+                  - logs:CreateLogStream
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                  - logs:CreateLogGroup
+                Resource:
+                  - !Sub arn:aws-cn:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/sagemaker/*
+                  - !Sub arn:aws-cn:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/sagemaker/*:log-stream:aws-glue-*
+              -
+                Effect: "Allow"
+                Action:
+                  - glue:UpdateDevEndpoint
+                  - glue:GetDevEndpoint
+                  - glue:GetDevEndpoints
+                Resource: !Sub arn:aws-cn:glue:${AWS::Region}:${AWS::AccountId}:devEndpoint/${DevEndpoint}*
+
+  NotebookInstance:
+    Type: AWS::SageMaker::NotebookInstance
+    Properties:
+      InstanceType: ml.t2.medium
+      LifecycleConfigName: !GetAtt 'NotebookInstanceLifecycleConfig.NotebookInstanceLifecycleConfigName'
+      NotebookInstanceName: !Sub aws-glue-${NotebookName}
+      RoleArn: !GetAtt 'NotebookRole.Arn'
+      Tags:
+        -
+          Key: aws-glue-dev-endpoint
+          Value: !Ref DevEndpoint
+  NotebookInstanceLifecycleConfig:
+    Type: AWS::SageMaker::NotebookInstanceLifecycleConfig
+    Properties:
+      NotebookInstanceLifecycleConfigName: !Sub aws-glue-${NotebookName}-LCConfig
+      OnCreate:
+        -
+          Content:
+            Fn::Base64: !Sub |
+              #!/bin/bash
+              set -ex
+              [ -e /home/ec2-user/glue_ready ] && exit 0
+
+              mkdir -p /home/ec2-user/glue
+              cd /home/ec2-user/glue
+
+              # Write dev endpoint in a file which will be used by daemon scripts
+              glue_endpoint_file="/home/ec2-user/glue/glue_endpoint.txt"
+
+              if [ -f $glue_endpoint_file ] ; then
+                  rm $glue_endpoint_file
+              fi
+              echo "https://glue.${AWS::Region}.amazonaws.com.cn" >> $glue_endpoint_file
+
+              ASSETS=s3://aws-glue-jes-prod-${AWS::Region}-assets/sagemaker/assets/
+
+              aws s3 cp ${!ASSETS} . --recursive
+
+              bash "/home/ec2-user/glue/Miniconda2-4.5.12-Linux-x86_64.sh" -b -u -p "/home/ec2-user/glue/miniconda"
+
+              source "/home/ec2-user/glue/miniconda/bin/activate"
+
+              tar -xf autossh-1.4e.tgz
+              cd autossh-1.4e
+              ./configure
+              make
+              sudo make install
+              sudo cp /home/ec2-user/glue/autossh.conf /etc/init/
+
+              mkdir -p /home/ec2-user/.sparkmagic
+              cp /home/ec2-user/glue/config.json /home/ec2-user/.sparkmagic/config.json
+
+              mkdir -p /home/ec2-user/SageMaker/Glue\ Examples
+              mv /home/ec2-user/glue/notebook-samples/* /home/ec2-user/SageMaker/Glue\ Examples/
+
+              # ensure SageMaker notebook has permission for the dev endpoint
+              aws glue get-dev-endpoint --endpoint-name ${DevEndpoint} --endpoint https://glue.${AWS::Region}.amazonaws.com.cn
+
+              # Run daemons as cron jobs and use flock make sure that daemons are started only iff stopped
+              (crontab -l; echo "* * * * * /usr/bin/flock -n /tmp/lifecycle-config-v2-dev-endpoint-daemon.lock /usr/bin/sudo /bin/sh /home/ec2-user/glue/lifecycle-config-v2-dev-endpoint-daemon.sh") | crontab -
+
+              (crontab -l; echo "* * * * * /usr/bin/flock -n /tmp/lifecycle-config-reconnect-dev-endpoint-daemon.lock /usr/bin/sudo /bin/sh /home/ec2-user/glue/lifecycle-config-reconnect-dev-endpoint-daemon.sh") | crontab -
+
+              CONNECTION_CHECKER_FILE=/home/ec2-user/glue/dev_endpoint_connection_checker.py
+              if [ -f "$CONNECTION_CHECKER_FILE" ]; then
+                  # wait for async dev endpoint connection to come up
+                  echo "Checking DevEndpoint connection."
+                  python3 $CONNECTION_CHECKER_FILE
+              fi
+
+              source "/home/ec2-user/glue/miniconda/bin/deactivate"
+
+              rm -rf "/home/ec2-user/glue/Miniconda2-4.5.12-Linux-x86_64.sh"
+
+              sudo touch /home/ec2-user/glue_ready
+
+      OnStart:
+        -
+          Content:
+            Fn::Base64: !Sub |
+              #!/bin/bash
+              set -ex
+              [ -e /home/ec2-user/glue_ready ] && exit 0
+
+              mkdir -p /home/ec2-user/glue
+              cd /home/ec2-user/glue
+
+              # Write dev endpoint in a file which will be used by daemon scripts
+              glue_endpoint_file="/home/ec2-user/glue/glue_endpoint.txt"
+
+              if [ -f $glue_endpoint_file ] ; then
+                  rm $glue_endpoint_file
+              fi
+              echo "https://glue.${AWS::Region}.amazonaws.com.cn" >> $glue_endpoint_file
+
+              ASSETS=s3://aws-glue-jes-prod-${AWS::Region}-assets/sagemaker/assets/
+
+              aws s3 cp ${!ASSETS} . --recursive
+
+              bash "/home/ec2-user/glue/Miniconda2-4.5.12-Linux-x86_64.sh" -b -u -p "/home/ec2-user/glue/miniconda"
+
+              source "/home/ec2-user/glue/miniconda/bin/activate"
+
+              tar -xf autossh-1.4e.tgz
+              cd autossh-1.4e
+              ./configure
+              make
+              sudo make install
+              sudo cp /home/ec2-user/glue/autossh.conf /etc/init/
+
+              mkdir -p /home/ec2-user/.sparkmagic
+              cp /home/ec2-user/glue/config.json /home/ec2-user/.sparkmagic/config.json
+
+              mkdir -p /home/ec2-user/SageMaker/Glue\ Examples
+              mv /home/ec2-user/glue/notebook-samples/* /home/ec2-user/SageMaker/Glue\ Examples/
+
+              # ensure SageMaker notebook has permission for the dev endpoint
+              aws glue get-dev-endpoint --endpoint-name ${DevEndpoint} --endpoint https://glue.${AWS::Region}.amazonaws.com.cn
+
+              # Run daemons as cron jobs and use flock make sure that daemons are started only iff stopped
+              (crontab -l; echo "* * * * * /usr/bin/flock -n /tmp/lifecycle-config-v2-dev-endpoint-daemon.lock /usr/bin/sudo /bin/sh /home/ec2-user/glue/lifecycle-config-v2-dev-endpoint-daemon.sh") | crontab -
+
+              (crontab -l; echo "* * * * * /usr/bin/flock -n /tmp/lifecycle-config-reconnect-dev-endpoint-daemon.lock /usr/bin/sudo /bin/sh /home/ec2-user/glue/lifecycle-config-reconnect-dev-endpoint-daemon.sh") | crontab -
+
+              CONNECTION_CHECKER_FILE=/home/ec2-user/glue/dev_endpoint_connection_checker.py
+              if [ -f "$CONNECTION_CHECKER_FILE" ]; then
+                  # wait for async dev endpoint connection to come up
+                  echo "Checking DevEndpoint connection."
+                  python3 $CONNECTION_CHECKER_FILE
+              fi
+
+              source "/home/ec2-user/glue/miniconda/bin/deactivate"
+
+              rm -rf "/home/ec2-user/glue/Miniconda2-4.5.12-Linux-x86_64.sh"
+
+              sudo touch /home/ec2-user/glue_ready
