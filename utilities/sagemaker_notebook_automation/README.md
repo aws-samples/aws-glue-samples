@@ -12,3 +12,10 @@ This template is just a sample that you should modify to meet your requirements.
 
 - Development Endpoint is created without any additional configuration. 
   If you want to customize the Development Endpoint, you can modify the template, or create a Development Endpoint manually and switch the Development Endpoint in the notebook. 
+  
+#### China regions
+
+- For China regions, please use [glue_sagemaker_notebook_cn.yaml](./glue_sagemaker_notebook_cn.yaml) as CouldFormation Template.
+- For other regions, please use [glue_sagemaker_notebook.yaml](./glue_sagemaker_notebook.yaml) as CouldFormation Template.
+
+
