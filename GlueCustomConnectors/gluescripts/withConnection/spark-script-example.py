@@ -21,4 +21,10 @@ datasource = glueContext.create_dynamic_frame_from_options(
     connection_options = options,
     transformation_ctx = "datasource")
 datasource.show()
+
+## Write to data target
+glueContext.write_dynamic_frame.from_options(frame = datasource,
+                                             connection_type = "custom.spark",
+                                             connection_options = options)
+
 job.commit()

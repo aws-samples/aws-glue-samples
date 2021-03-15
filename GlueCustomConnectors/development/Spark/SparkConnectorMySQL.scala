@@ -23,14 +23,26 @@ import org.apache.spark.unsafe.types.UTF8String
   * A simple Spark DataSource V2 with read and write support, the connector will connect to
   * a local MySQL database and its employee table for reading/writing.
   */
-class JdbcSourceV2 extends DataSourceV2 with ReadSupport {
+class JdbcSourceV2 extends DataSourceV2 with ReadSupport with WriteSupport {
 
   override def createReader(options: DataSourceOptions): JdbcDataSourceReader =
-    new JdbcDataSourceReader(options.get("url").get(),
+    new JdbcDataSourceReader(
+      options.get("url").get(),
       options.get("user").get(),
       options.get("password").get(),
       options.get("table").get()
     )
+
+  override def createWriter(jobId: String, schema: StructType, mode: SaveMode,
+                            options: DataSourceOptions): Optional[DataSourceWriter] = {
+    Optional.of(new MysqlDataSourceWriter(
+      options.get("url").get(),
+      options.get("user").get(),
+      options.get("password").get(),
+      options.get("table").get(),
+      schema)
+    )
+  }
 }
 
 class JdbcDataSourceReader(url: String,
@@ -150,3 +162,89 @@ class JdbcDataReader(
     conn.close()
   }
 }
+
+class MysqlDataSourceWriter(url: String,
+                            user: String,
+                            password: String,
+                            table: String,
+                            rddSchema: StructType) extends DataSourceWriter with Logging {
+
+  override def createWriterFactory(): DataWriterFactory[InternalRow] = {
+    new MysqlDataWriterFactory(url, user, password, table, rddSchema)
+  }
+
+  override def commit(messages: Array[WriterCommitMessage]): Unit = {
+    // logic called if all partition write job succeeds
+    log.info("Write succeeded")
+  }
+
+  override def abort(messages: Array[WriterCommitMessage]): Unit = {
+    // logic called if write job fails
+    log.error("Write failed")
+  }
+}
+
+
+class MysqlDataWriterFactory(url: String,
+                             user: String,
+                             password: String,
+                             table: String,
+                             rddSchema: StructType)
+  extends DataWriterFactory[InternalRow] {
+  override def createDataWriter(partitionId: Int, taskId: Long, epochId: Long):
+  DataWriter[InternalRow] = {
+    new JdbcDataWriter(url, user, password, table, rddSchema)
+  }
+}
+
+class JdbcDataWriter(url: String,
+                     user: String,
+                     password: String,
+                     table: String,
+                     rddSchema: StructType) extends DataWriter[InternalRow] {
+  var connection = DriverManager.getConnection(url, user, password)
+  val statement = getInsertStatement(table, rddSchema)
+  val numFields = rddSchema.fields.length
+  val preparedStatement = connection.prepareStatement(statement)
+
+  override def write(record: InternalRow): Unit = {
+    var i = 0
+    while (i < numFields) {
+      rddSchema.fields(i).dataType match {
+        case IntegerType => preparedStatement.setInt(i + 1, record.getInt(i))
+        case StringType => preparedStatement.setString(i + 1, record.getString(i))
+        case dt: DecimalType =>
+          preparedStatement.setBigDecimal(i + 1,
+            record.getDecimal(i, dt.precision, dt.scale).toJavaBigDecimal)
+      }
+      i = i + 1
+    }
+    preparedStatement.addBatch()
+  }
+
+  override def commit(): WriterCommitMessage = {
+    preparedStatement.executeBatch()
+    closeConnection
+    WriteSucceeded
+  }
+
+  override def abort(): Unit = {
+    closeConnection
+  }
+
+  private def closeConnection(): Unit = {
+    if (connection != null) {
+      connection.close()
+      connection = null
+    }
+  }
+
+  private def getInsertStatement(table: String,
+                                 rddSchema: StructType): String = {
+    val columns = rddSchema.fields.map(x => x.name).mkString(",")
+    s"INSERT INTO $table ($columns) " +
+      s"VALUES(${List.fill(rddSchema.fields.length)("?").mkString(",")})"
+  }
+}
+
+object WriteSucceeded extends WriterCommitMessage

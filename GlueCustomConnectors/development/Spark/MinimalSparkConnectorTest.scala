@@ -28,5 +28,10 @@ object MinimalSparkConnectorTest {
     val dyf = datasource.getDynamicFrame()
     dyf.show()
     dyf.printSchema()
+
+    val customSink = glueContext.getSink(
+      connectionType = "custom.spark",
+      connectionOptions = JsonOptions(optionsMap))
+    customSink.writeDynamicFrame(dyf)
   }
 }
