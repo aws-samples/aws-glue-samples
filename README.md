@@ -15,8 +15,6 @@ repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs)
    answers some of the more common questions people have.
 
 ### Examples
- You can run these sample job scripts on any of AWS Glue ETL jobs, [container](https://aws.amazon.com/blogs/big-data/developing-aws-glue-etl-jobs-locally-using-a-container/), or [local environment](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-libraries.html).
-
  - [Join and Relationalize Data in S3](examples/join_and_relationalize.md)
 
    This sample ETL script shows you how to use AWS Glue to load, transform,

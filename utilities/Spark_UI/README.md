@@ -30,13 +30,13 @@ If you prefer local access (not to have EC2 instance for Apache Spark history se
 **Using AWS temporary credentials**
 1.  Run commands shown below
     - Set **LOG_DIR** by replacing **s3a://path_to_eventlog** with your event log directory
-    - Set **AWS_ACCESS_KEY_ID**, **AWS_SECRET_ACCESS_KEY**, and **AWS_SESSION_TOKEN** with your valid AWS credential
+    - Set **AWS_ACCESS_KEY_ID**, **AWS_SECRET_ACCESS_KEY**, and **SESSION_TOKEN** with your valid AWS credential
     ``` 
         $ LOG_DIR="s3a://path_to_eventlog/"
         $ AWS_ACCESS_KEY_ID="ASIAxxxxxxxxxxxx"
         $ AWS_SECRET_ACCESS_KEY="yyyyyyyyyyyyyyy"
-        $ AWS_SESSION_TOKEN="zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
-        $ docker run -itd -e SPARK_HISTORY_OPTS="$SPARK_HISTORY_OPTS -Dspark.history.fs.logDirectory=$LOG_DIR -Dspark.hadoop.fs.s3a.access.key=$AWS_ACCESS_KEY_ID -Dspark.hadoop.fs.s3a.secret.key=$AWS_SECRET_ACCESS_KEY -Dspark.hadoop.fs.s3a.session.token=$AWS_SESSION_TOKEN -Dspark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.TemporaryAWSCredentialsProvider" -p 18080:18080 glue/sparkui:latest "/opt/spark/bin/spark-class org.apache.spark.deploy.history.HistoryServer"
+        $ SESSION_TOKEN="zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+        $ docker run -itd -e SPARK_HISTORY_OPTS="$SPARK_HISTORY_OPTS -Dspark.history.fs.logDirectory=$LOG_DIR -Dspark.hadoop.fs.s3a.access.key=$AWS_ACCESS_KEY_ID -Dspark.hadoop.fs.s3a.secret.key=$AWS_SECRET_ACCESS_KEY -Dspark.hadoop.fs.s3a.session.token=$SESSION_TOKEN -Dspark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.TemporaryAWSCredentialsProvider" -p 18080:18080 glue/sparkui:latest "/opt/spark/bin/spark-class org.apache.spark.deploy.history.HistoryServer"
     ```
 
 #### View the Spark UI using Docker

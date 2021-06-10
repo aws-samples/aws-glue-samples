@@ -17,7 +17,7 @@ from pyspark.sql.functions import lit, struct, array, col, UserDefinedFunction, 
 from pyspark.sql.types import StringType, StructField, StructType, LongType, ArrayType, MapType, IntegerType, \
     FloatType, BooleanType
 
-PYTHON_VERSION = sys.version_info[0]
+
 MYSQL_DRIVER_CLASS = 'com.mysql.jdbc.Driver'
 
 # flags for migration direction
@@ -269,18 +269,11 @@ def register_methods_to_dataframe():
     """
     Register self-defined helper methods to dataframe
     """
-    if PYTHON_VERSION==3:
-        DataFrame.empty = MethodType(empty, DataFrame)
-        DataFrame.drop_columns = MethodType(drop_columns, DataFrame)
-        DataFrame.rename_columns = MethodType(rename_columns, DataFrame)
-        DataFrame.get_schema_type = MethodType(get_schema_type, DataFrame)
-        DataFrame.join_other_to_single_column = MethodType(join_other_to_single_column, DataFrame)
-    else:
-        DataFrame.empty = MethodType(empty, None, DataFrame)
-        DataFrame.drop_columns = MethodType(drop_columns, None, DataFrame)
-        DataFrame.rename_columns = MethodType(rename_columns, None, DataFrame)
-        DataFrame.get_schema_type = MethodType(get_schema_type, None, DataFrame)
-        DataFrame.join_other_to_single_column = MethodType(join_other_to_single_column, None, DataFrame)
+    DataFrame.empty = MethodType(empty, None, DataFrame)
+    DataFrame.drop_columns = MethodType(drop_columns, None, DataFrame)
+    DataFrame.rename_columns = MethodType(rename_columns, None, DataFrame)
+    DataFrame.get_schema_type = MethodType(get_schema_type, None, DataFrame)
+    DataFrame.join_other_to_single_column = MethodType(join_other_to_single_column, None, DataFrame)
 
 
 register_methods_to_dataframe()
@@ -330,7 +323,7 @@ class HiveMetastoreTransformer:
 
         return self.sql_context.createDataFrame(
             df.rdd.map(lambda row: (row[id_col], {row[key]: row[value]})).reduceByKey(merge_dict).map(
-                lambda id_name, dictionary: (id_name, remove_none_key(dictionary))), output_schema)
+                lambda (id_name, dictionary): (id_name, remove_none_key(dictionary))), output_schema)
 
     def join_with_params(self, df, df_params, id_col):
         df_params_map = self.transform_params(params_df=df_params, id_col=id_col)
@@ -376,8 +369,8 @@ class HiveMetastoreTransformer:
         """
         rdd_result = df.rdd.map(lambda row: (row[id_col], (row[idx], payload_func(row)))) \
             .aggregateByKey([], append, extend) \
-            .map(lambda id_column, list_with_idx: (id_column, sorted(list_with_idx, key=lambda t: t[0]))) \
-            .map(lambda id_column, list_with_idx: (id_column, [payload for index, payload in list_with_idx]))
+            .map(lambda (id_column, list_with_idx): (id_column, sorted(list_with_idx, key=lambda t: t[0]))) \
+            .map(lambda (id_column, list_with_idx): (id_column, [payload for index, payload in list_with_idx]))
 
         schema = StructType([StructField(name=id_col, dataType=LongType(), nullable=False),
                              StructField(name=payloads_column_name, dataType=ArrayType(elementType=payload_type))])
@@ -816,7 +809,7 @@ class DataCatalogTransformer:
 
     @staticmethod
     def udf_milliseconds_str_to_timestamp(milliseconds_str):
-        return 0 if milliseconds_str is None else long(milliseconds_str) / 1000
+        return 0L if milliseconds_str is None else long(milliseconds_str) / 1000
 
     @staticmethod
     def udf_string_list_str_to_list(str):
