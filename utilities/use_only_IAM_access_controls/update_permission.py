@@ -24,7 +24,7 @@ while 'NextToken' in res:
     res = lakeformation.list_resources(NextToken=res['NextToken'])
     resources.extend(res['ResourceInfoList'])
 for r in resources:
-    print('... Deregistering ' + r['ResourceArn'] + '...')
+    print(f"... Deregistering {r['ResourceArn']} ...")
     lakeformation.deregister_resource(ResourceArn=r['ResourceArn'])
 
 # 3. Grant CREATE_DATABASE to IAM_ALLOWED_PRINCIPALS for catalog
@@ -42,7 +42,7 @@ get_databases_paginator = glue.get_paginator('get_databases')
 for page in get_databases_paginator.paginate():
     databases.extend(page['DatabaseList'])
 for d in databases:
-    print('...Granting permissions on database ' + d['Name'] + '...')
+    print(f"... Granting permissions on database {d['Name']} ...")
 
     # 4.1. Grant ALL to IAM_ALLOWED_PRINCIPALS for existing databases
     database_resource = {'Database': {'Name': d['Name']}}
@@ -88,7 +88,7 @@ for d in databases:
         tables.extend(page['TableList'])
 
     for t in tables:
-        print('...Granting permissions on table ' + d['Name'] + '...')
+        print(f"... Granting permissions on table {d['Name']} ...")
         table_resource = {'Table': {'DatabaseName': d['Name'], 'Name': t['Name']}}
         lakeformation.grant_permissions(Principal=iam_allowed_principal,
                                         Resource=table_resource,
@@ -104,7 +104,7 @@ while 'NextToken' in res:
     permissions.extend(res['PrincipalResourcePermissions'])
 for p in permissions:
     if p['Principal']['DataLakePrincipalIdentifier'] != 'IAM_ALLOWED_PRINCIPALS':
-        print('...Revoking permissions of ' + p['Principal']['DataLakePrincipalIdentifier'] + ' on table ' + d['Name'] + '...')
+        print(f"... Revoking permissions of {p['Principal']['DataLakePrincipalIdentifier']} on resource {p['Resource']} ...")
         try:
             lakeformation.revoke_permissions(Principal=p['Principal'],
                                              Resource=p['Resource'],
