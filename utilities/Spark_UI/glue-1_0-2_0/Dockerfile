@@ -21,4 +21,3 @@ spark.history.ui.port                       18080\n\
 ' > /opt/spark/conf/spark-defaults.conf
 
 ENTRYPOINT ["/bin/bash", "-c"]:
-
