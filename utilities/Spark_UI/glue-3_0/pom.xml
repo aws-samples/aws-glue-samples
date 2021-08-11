@@ -15,7 +15,7 @@
 		<hadoop.version>3.2.1</hadoop.version>
 		<awssdk.version>1.11.901</awssdk.version>
 		<httpclient.version>4.5.13</httpclient.version>
-		<jackson.version>2.10.5</jackson.version>
+		<jackson.version>2.10.5.1</jackson.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
