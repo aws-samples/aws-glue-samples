@@ -62,17 +62,25 @@ Note: please refer to this [Glue doc](https://docs.aws.amazon.com/glue/latest/dg
 2. To validate your connector against Glue features locally, add the [ScalaTest](https://www.scalatest.org/user_guide) dependency to the project pom.xml. Please 
 follow this [Using the ScalaTest Maven plugin](https://www.scalatest.org/user_guide/using_the_scalatest_maven_plugin) to disable SureFire and enable ScalaTest in the pom.xml.
     ```
-     <dependency>
+    <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_2.11</artifactId>
             <version>3.0.5</version>
             <scope>test</scope>
-        </dependency>
+    </dependency>
+
+    <!-- For Glue 3.0 -->
+    <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_2.12</artifactId>
+            <version>3.0.5</version>
+            <scope>test</scope>
+    </dependency>        
     ```
     Copy the integration tests to the local project directory.
 3. Build the project.
 
-Note: Remember to replace the Glue version string with 2.0.0 for AWS Glue 2.0, or 1.0.0 for AWS Glue version 1.0 and later.. 
+Note: Remember to replace the Glue version string with 3.0.0 for AWS Glue 3.0, and with 2.0.0 for AWS Glue 2.0 or 1.0.0 for AWS Glue version 1.0 and 2.0. 
     
 The following is a sample POM file for the Maven project with Snowflake open-source spark
 ```
@@ -85,7 +93,8 @@ The following is a sample POM file for the Maven project with Snowflake open-sou
     <description>AWS Glue ETL application</description>
 
         <properties>
-        <scala.version>2.11.1</scala.version>
+            <scala.version>2.11.1</scala.version>
+            <scala.version>2.12.10</scala.version> <!-- For Glue 3.0. -->
         </properties>
 
     <dependencies>
@@ -114,6 +123,7 @@ The following is a sample POM file for the Maven project with Snowflake open-sou
         <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest_2.11</artifactId>
+            <artifactId>scalatest_2.12</artifactId> <!-- For Glue 3.0 -->
             <version>3.0.5</version>
             <scope>test</scope>
         </dependency>
