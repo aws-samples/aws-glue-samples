@@ -14,13 +14,15 @@ folder of this package.
 ## Step 2: Install Glue libraries
 1. Download the Apache Spark distribution from one of the following locations:
     1. For AWS Glue version 0.9: https://aws-glue-etl-artifacts.s3.amazonaws.com/glue-0.9/spark-2.2.1-bin-hadoop2.7.tgz
-    2. For AWS Glue version 1.0 and later: https://aws-glue-etl-artifacts.s3.amazonaws.com/glue-1.0/spark-2.4.3-bin-hadoop2.8.tgz
+    2. For AWS Glue version 1.0 and 2.0: https://aws-glue-etl-artifacts.s3.amazonaws.com/glue-1.0/spark-2.4.3-bin-hadoop2.8.tgz
+    3. For AWS Glue version 3.0: https://aws-glue-etl-artifacts.s3.amazonaws.com/glue-3.0/spark-3.1.1-amzn-0-bin-3.2.1-amzn-3.tgz
 
 2. Unzip Glue libraries at some location such /home/$USER/
 
 3. Export the SPARK_HOME environment variable, setting it to the root location extracted from the Spark archive. For example:
     1. For AWS Glue version 0.9: export SPARK_HOME=/home/$USER/spark-2.2.1-bin-hadoop2.7
-    2. For AWS Glue version 1.0 and later: export SPARK_HOME=/home/$USER/spark-2.4.3-bin-spark-2.4.3-bin-hadoop2.8
+    2. For AWS Glue version 1.0 and 2.0: export SPARK_HOME=/home/$USER/spark-2.4.3-bin-spark-2.4.3-bin-hadoop2.8
+    3. For AWS Glue version 3.0: export SPARK_HOME=/home/$USER/spark-3.1.1-amzn-0-bin-3.2.1-amzn-3
 
 Note: please refer to this [Glue doc](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-libraries.html) for up-to-date information.
 
@@ -55,6 +57,20 @@ Note: please refer to this [Glue doc](https://docs.aws.amazon.com/glue/latest/dg
                   <groupId>net.snowflake</groupId>
                   <artifactId>snowflake-jdbc</artifactId>
                   <version>3.12.3</version>
+                  <scope>provided</scope>
+              </dependency>
+
+              <!-- For Glue 3.0 -->
+              <dependency>
+                  <groupId>net.snowflake</groupId>
+                  <artifactId>spark-snowflake_2.12</artifactId>
+                  <version>2.9.1-spark_3.1</version>
+                  <scope>provided</scope>
+              </dependency>
+              <dependency>
+                  <groupId>net.snowflake</groupId>
+                  <artifactId>snowflake-jdbc</artifactId>
+                  <version>3.13.6</version>
                   <scope>provided</scope>
               </dependency>
       ```  
@@ -107,17 +123,21 @@ The following is a sample POM file for the Maven project with Snowflake open-sou
             <groupId>com.amazonaws</groupId>
             <artifactId>AWSGlueETL</artifactId>
             <version>1.0.0</version>
+            <version>3.0.0</version> <!-- For Glue 3.0. -->
         </dependency>
         <dependency>
             <groupId>net.snowflake</groupId>
             <artifactId>spark-snowflake_2.11</artifactId>
-            <version>2.7.0-spark_2.4</version>
+            <artifactId>spark-snowflake_2.12</artifactId> <!-- For Glue 3.0. -->
+            <version>2.7.0-spark_2.4</version> 
+            <version>2.9.1-spark_3.1</version> <!-- For Glue 3.0. -->
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>net.snowflake</groupId>
             <artifactId>snowflake-jdbc</artifactId>
             <version>3.12.3</version>
+            <version>3.13.6</version> <!-- For Glue 3.0 -->
             <scope>provided</scope>
           </dependency>
         <dependency>
