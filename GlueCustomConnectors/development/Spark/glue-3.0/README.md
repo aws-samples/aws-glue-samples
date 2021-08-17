@@ -6,7 +6,7 @@ This document shows how to develop a connector supporting Glue 3.0 and Spark 3.1
 ## Setup Environment
 Build a local Scala environment with local Glue ETL maven library: [Developing Locally with Scala](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-libraries.html). You may also refer to [GlueSparkRuntime](https://github.com/aws-samples/aws-glue-samples/blob/master/GlueCustomConnectors/development/GlueSparkRuntime/README.md) for more details to custom the local environment for advanced testing.
 
-## DataSourceV2 Interfaces in Spark 3
+## New DataSourceV2 APIs in Spark 3
 
 | Interface                          | Description                                                  |
 |------------------------------------|--------------------------------------------------------------|
@@ -73,7 +73,7 @@ class DefaultSource extends TableProvider {
 
 #### 1-2. Implement the data source representation  `Table` with mix-in `SupporsRead` and `SupportsWrite`
 
-You can read/write functionalities to your connector by mix-in `SupportsRead` and `SupportsWrite` for the implementation of the `Table` interface. In addition to these functionalities, you need to set the capabilities of your connectors such as read-only, write-only or both by specifying the `TableCapability` enumerations to the  `capabilities` method.
+You can add read/write functionalities to your connector by mix-in `SupportsRead` and `SupportsWrite` for the implementation of the `Table` interface. In addition to these functionalities, you need to set the capabilities of your connectors such as read-only, write-only or both by specifying the `TableCapability` enumerations to the  `capabilities` method.
 
 In this example, the connector supports batch-read and batch-write, not streaming data source.
 
@@ -245,3 +245,31 @@ class SimpleDataWriter(partitionId: Int, taskId: Long) extends DataWriter[Intern
 
 ### 4. Run tests
 You can run the same tests which are described in [8. Plug-in and read using the connector with Glue.](https://github.com/aws-samples/aws-glue-samples/blob/master/GlueCustomConnectors/development/Spark/README.md#8-plug-in-and-read-using-the-connector-with-glue) and [9. Test with catalog connection](https://github.com/aws-samples/aws-glue-samples/blob/master/GlueCustomConnectors/development/Spark/README.md#9-test-with-catalog-connection) which are aiming at Spark 2 environment. And, you should be able to get the same results by running those tests. **Please note that you specify the class name as `simple.spark.connector` (NOT `simple.spark.connector.MinimalSpark3Connector`), and use Glue 3.0 runtime.** As described above, `DefaultSource` class will be automatically called in Spark 3.
+
+## Connector Migration from Spark 2.4.3 (Glue 2.0) to Spark 3.1.1 (Glue 3.0)
+This part shows how you migrate your Spark connectors from Glue 2.0 to Glue 3.0. As described above, the [DataSourceV2 APIs in Spark 3](#new-datasourcev2-apis-in-spark-3) which need to be implemented have been changed compared with [those of Spark 2](https://github.com/aws-samples/aws-glue-samples/blob/master/GlueCustomConnectors/development/Spark/README.md#spark-datasource-interfaces). 
+
+The following table simply shows new interfaces in Spark 3 which correspond with APIs listed in [Spark 2 data source interfaces](https://github.com/aws-samples/aws-glue-samples/blob/master/GlueCustomConnectors/development/Spark/README.md#spark-datasource-interfaces). For example, if you already has the implementation of `DataSourceV2` with mix-in `ReadSupport` and `WriteSupport`, you update that part with the implementation of `TableProvider` and `Table` with mix-in `SupportsRead` and `SupportsWrite`.
+
+
+| Part | Interface for Spark 2.4.3/Glue 2.0  | *New interface for Spark 3.1.1/Glue 3.0* |
+|---|------------------------------------|------------------------------------|
+| **Data Source** | **`DataSourceV2`** | **`TableProvider`** / **`Table`** |
+|  | **`ReadSupport`** (usually mix-in with `DataSourceV2`) | **`SupportsRead`** (usually mix-in with `Table`) |
+|  | `ReadSupport.createReader` | `SupportsRead.newScanBuilder` |
+| | **`WriteSupport`** (usually mix-in with `DataSourceV2`) | **`SupportsWrite`** (usually mix-in with `Table`) |
+| | `WriteSupport.createWriter`  | `SupportsWrite.newBatchWriter` | 
+| **Reader** | **`DataSourceReader`** | **`ScanBuilder`** / **`Scan`** / **`Batch`** |
+| | `DataSourceReader.planInputPartition` | `Batch.planInputPartition` |
+| | **`InputPartition`** | **`InputPartition`** / **`PartitionReaderFactory`** | 
+| | `InputPartition.createPartitionReader` | `PartitionReaderFactory.createPartitionReader` | 
+| | **`InputPartitionreader`** | **`PartitionReader`** | 
+| | `InputPartitionReader.next\|get\|close` | `PartitionReader.next\|get\|close` | 
+| **Writer** | **`DataSourceWriter`** | **`WriteBuilder`** / **`BatchWrite`** |
+| | `DataSourceWriter.createWriteFactory` | `BatchWrite.createBatchWriterFactory` |
+| | **`DataWriterFactory`** | **`DataWriterFactory`** |
+| | `DataWriterFactory.createDataWriter` | `DataWriterFactory.createWriter` |
+| | **`DataWriter`** | **`DataWriter`** |
+| | `DataWriter.write\|commit\|abort\|` | `DataWriter.write\|commit\|abort\|` |
+
+

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2016-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * SPDX-License-Identifier: MIT-0
+ */
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.connector.catalog.{SupportsRead, SupportsWrite, Table, TableCapability, TableProvider}
 import org.apache.spark.sql.connector.expressions.Transform
