@@ -1,4 +1,6 @@
-# Develop Glue Custom Spark Connectors
+# Develop Glue Custom Spark Connectors for Glue 1.0/2.0
+***This document is for Glue 1.0/2.0.***  
+***For the development guide and example code for Glue 3.0 and Spark 3.1.1, you can see in [glue-3.0](./glue-3.0).***
 
 ## Introduction
 

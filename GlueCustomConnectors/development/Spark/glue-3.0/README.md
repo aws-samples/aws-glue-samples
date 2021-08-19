@@ -249,7 +249,7 @@ You can run the same tests which are described in [8. Plug-in and read using the
 ## Connector Migration from Spark 2.4.3 (Glue 2.0) to Spark 3.1.1 (Glue 3.0)
 This part shows how you migrate your Spark connectors from Glue 2.0 to Glue 3.0. As described above, the [DataSourceV2 APIs in Spark 3](#new-datasourcev2-apis-in-spark-3) which need to be implemented have been changed compared with [those of Spark 2](https://github.com/aws-samples/aws-glue-samples/blob/master/GlueCustomConnectors/development/Spark/README.md#spark-datasource-interfaces). 
 
-The following table simply shows new interfaces in Spark 3 which correspond with APIs listed in [Spark 2 data source interfaces](https://github.com/aws-samples/aws-glue-samples/blob/master/GlueCustomConnectors/development/Spark/README.md#spark-datasource-interfaces). For example, if you already has the implementation of `DataSourceV2` with mix-in `ReadSupport` and `WriteSupport`, you update that part with the implementation of `TableProvider` and `Table` with mix-in `SupportsRead` and `SupportsWrite`.
+The following table simply shows new interfaces in Spark 3 which correspond with APIs listed in [Spark 2 data source interfaces](https://github.com/aws-samples/aws-glue-samples/blob/master/GlueCustomConnectors/development/Spark/README.md#spark-datasource-interfaces). For example, if you already have the implementation of `DataSourceV2` with mix-in `ReadSupport` and `WriteSupport`, you update that part with the implementation of `TableProvider` and `Table` with mix-in `SupportsRead` and `SupportsWrite`.
 
 
 | Part | Interface for Spark 2.4.3/Glue 2.0  | *New interface for Spark 3.1.1/Glue 3.0* |
@@ -271,5 +271,3 @@ The following table simply shows new interfaces in Spark 3 which correspond with
 | | `DataWriterFactory.createDataWriter` | `DataWriterFactory.createWriter` |
 | | **`DataWriter`** | **`DataWriter`** |
 | | `DataWriter.write\|commit\|abort\|` | `DataWriter.write\|commit\|abort\|` |
-
-
