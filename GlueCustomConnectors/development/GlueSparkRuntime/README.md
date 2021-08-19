@@ -14,13 +14,15 @@ folder of this package.
 ## Step 2: Install Glue libraries
 1. Download the Apache Spark distribution from one of the following locations:
     1. For AWS Glue version 0.9: https://aws-glue-etl-artifacts.s3.amazonaws.com/glue-0.9/spark-2.2.1-bin-hadoop2.7.tgz
-    2. For AWS Glue version 1.0 and later: https://aws-glue-etl-artifacts.s3.amazonaws.com/glue-1.0/spark-2.4.3-bin-hadoop2.8.tgz
+    2. For AWS Glue version 1.0 and 2.0: https://aws-glue-etl-artifacts.s3.amazonaws.com/glue-1.0/spark-2.4.3-bin-hadoop2.8.tgz
+    3. For AWS Glue version 3.0: https://aws-glue-etl-artifacts.s3.amazonaws.com/glue-3.0/spark-3.1.1-amzn-0-bin-3.2.1-amzn-3.tgz
 
 2. Unzip Glue libraries at some location such /home/$USER/
 
 3. Export the SPARK_HOME environment variable, setting it to the root location extracted from the Spark archive. For example:
     1. For AWS Glue version 0.9: export SPARK_HOME=/home/$USER/spark-2.2.1-bin-hadoop2.7
-    2. For AWS Glue version 1.0 and later: export SPARK_HOME=/home/$USER/spark-2.4.3-bin-spark-2.4.3-bin-hadoop2.8
+    2. For AWS Glue version 1.0 and 2.0: export SPARK_HOME=/home/$USER/spark-2.4.3-bin-spark-2.4.3-bin-hadoop2.8
+    3. For AWS Glue version 3.0: export SPARK_HOME=/home/$USER/spark-3.1.1-amzn-0-bin-3.2.1-amzn-3
 
 Note: please refer to this [Glue doc](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-libraries.html) for up-to-date information.
 
@@ -35,7 +37,7 @@ Note: please refer to this [Glue doc](https://docs.aws.amazon.com/glue/latest/dg
          -Dpackaging="jar"
     ```
     and add the installed connector dependency to the project pom.xml.
-    ```
+    ```xml
       <dependency>
           <groupId>your_gorupId</groupId>
           <artifactId>your_artifactId</artifactId>
@@ -44,7 +46,7 @@ Note: please refer to this [Glue doc](https://docs.aws.amazon.com/glue/latest/dg
     ```
     For example, add the following dependencies to the POM file for the open-source Snowflake Spark connector:
     
-      ```
+      ```xml
               <dependency>
                   <groupId>net.snowflake</groupId>
                   <artifactId>spark-snowflake_2.11</artifactId>
@@ -57,25 +59,39 @@ Note: please refer to this [Glue doc](https://docs.aws.amazon.com/glue/latest/dg
                   <version>3.12.3</version>
                   <scope>provided</scope>
               </dependency>
+
+              <!-- For Glue 3.0 -->
+              <dependency>
+                  <groupId>net.snowflake</groupId>
+                  <artifactId>spark-snowflake_2.12</artifactId>
+                  <version>2.9.1-spark_3.1</version>
+                  <scope>provided</scope>
+              </dependency>
+              <dependency>
+                  <groupId>net.snowflake</groupId>
+                  <artifactId>snowflake-jdbc</artifactId>
+                  <version>3.13.6</version>
+                  <scope>provided</scope>
+              </dependency>
       ```  
 
 2. To validate your connector against Glue features locally, add the [ScalaTest](https://www.scalatest.org/user_guide) dependency to the project pom.xml. Please 
 follow this [Using the ScalaTest Maven plugin](https://www.scalatest.org/user_guide/using_the_scalatest_maven_plugin) to disable SureFire and enable ScalaTest in the pom.xml.
-    ```
-     <dependency>
+    ```xml
+    <dependency>
             <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_2.11</artifactId>
+            <artifactId>scalatest_2.11</artifactId>  <!-- For Glue 3.0 please use scalatest_2.12 -->
             <version>3.0.5</version>
             <scope>test</scope>
-        </dependency>
+    </dependency>    
     ```
     Copy the integration tests to the local project directory.
 3. Build the project.
 
-Note: Remember to replace the Glue version string with 2.0.0 for AWS Glue 2.0, or 1.0.0 for AWS Glue version 1.0 and later.. 
+Note: Remember to replace the Glue version string with 3.0.0 for AWS Glue 3.0, and with 2.0.0 for AWS Glue 2.0 or 1.0.0 for AWS Glue version 1.0 and 2.0.
     
 The following is a sample POM file for the Maven project with Snowflake open-source spark
-```
+```xml
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.amazonaws</groupId>
@@ -85,7 +101,7 @@ The following is a sample POM file for the Maven project with Snowflake open-sou
     <description>AWS Glue ETL application</description>
 
         <properties>
-        <scala.version>2.11.1</scala.version>
+            <scala.version>2.11.1</scala.version>  <!-- For Glue 3.0 please use 2.12.10 -->
         </properties>
 
     <dependencies>
@@ -97,23 +113,23 @@ The following is a sample POM file for the Maven project with Snowflake open-sou
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>AWSGlueETL</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.0</version>  <!-- For Glue 3.0 please use 3.0.0 -->
         </dependency>
         <dependency>
             <groupId>net.snowflake</groupId>
-            <artifactId>spark-snowflake_2.11</artifactId>
-            <version>2.7.0-spark_2.4</version>
+            <artifactId>spark-snowflake_2.11</artifactId>  <!-- For Glue 3.0 please use spark-snowflake_2.12 -->
+            <version>2.7.0-spark_2.4</version>  <!-- For Glue 3.0 please use 2.9.1-spark_3.1 -->
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>net.snowflake</groupId>
             <artifactId>snowflake-jdbc</artifactId>
-            <version>3.12.3</version>
+            <version>3.12.3</version>  <!-- For Glue 3.0 please use 3.13.6 -->
             <scope>provided</scope>
           </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_2.11</artifactId>
+            <artifactId>scalatest_2.11</artifactId>  <!-- For Glue 3.0 please use scalatest_2.12 -->
             <version>3.0.5</version>
             <scope>test</scope>
         </dependency>
