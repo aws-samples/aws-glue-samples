@@ -54,13 +54,16 @@ call_help(){
 
   # To create a Dockerfile
 cat > Dockerfile <<- "EOF"
-FROM amazonlinux
+FROM amazonlinux:2.0.20210721.2
 COPY ./connector_jars  ./jars
 EOF
  
  
  # Create a new directory for the connector jars
  mkdir -p connector_jars
+
+ # Clean up the directory for connector jars
+ rm -f connector_jars/* 
  
  # Check the total number of parameters passed to the shell script
  if [[ (${#@} != 10 && ${#@} != 12) && (${#@} != 14) ]]; then
@@ -191,7 +194,12 @@ EOF
  if [ $? -eq "0" ]
  then
     echo "Login Succeeded"
-    aws ecr describe-repositories --repository-names $ecr_repo_name --region $aws_region || aws ecr create-repository --repository-name $ecr_repo_name --region $aws_region
+    if [ -z "$aws_cli_profile" ]
+    then
+      aws ecr describe-repositories --repository-names $ecr_repo_name --region $aws_region || aws ecr create-repository --repository-name $ecr_repo_name --region $aws_region
+    else
+      aws ecr describe-repositories --repository-names $ecr_repo_name --region $aws_region --profile $aws_cli_profile || aws ecr create-repository --repository-name $ecr_repo_name --region $aws_region --profile $aws_cli_profile
+    fi
     docker build -t connector:$image_tag .
     docker tag connector:$image_tag $aws_account_id.dkr.ecr.$aws_region.amazonaws.com/$ecr_repo_name:$image_tag
     docker push $aws_account_id.dkr.ecr.$aws_region.amazonaws.com/$ecr_repo_name:$image_tag
