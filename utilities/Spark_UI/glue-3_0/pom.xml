@@ -16,6 +16,7 @@
 		<awssdk.version>1.11.901</awssdk.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<jackson.version>2.10.5</jackson.version>
+		<jackson.databind.version>2.10.5.1</jackson.databind.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -97,7 +98,7 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>${jackson.version}</version>
+			<version>${jackson.databind.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

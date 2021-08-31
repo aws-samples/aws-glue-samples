@@ -14,8 +14,9 @@
 		<jdk.version>1.8</jdk.version>
 		<hadoop.version>2.8.5</hadoop.version>
 		<awssdk.version>1.11.696</awssdk.version>
-		<httpclient.version>4.5.9</httpclient.version>
-                <jackson.version>2.10.3</jackson.version>
+		<httpclient.version>4.5.13</httpclient.version>
+		<jackson.version>2.10.5</jackson.version>
+		<jackson.databind.version>2.10.5.1</jackson.databind.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -97,7 +98,7 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>${jackson.version}</version>
+			<version>${jackson.databind.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
