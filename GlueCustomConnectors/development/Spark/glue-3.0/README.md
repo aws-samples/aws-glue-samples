@@ -3,6 +3,8 @@
 ## Introduction
 This document shows how to develop a connector supporting Glue 3.0 and Spark 3.1.1 for reading and writing data. We’ll use the simple example to show an overview of DataSourceV2 interface implementations in Spark 3. The full code example is [MinimalSpark3Connector](./MinimalSpark3Connector.scala) in the same folder.
 
+In addition to the minimal connector, please refer to the [TPC-DS connector for Glue 3.0](./tpcds-custom-connector-for-glue3.0) in the same folder, which is the actual Glue custom connector package published on AWS Marketplace.
+
 ## Setup Environment
 Build a local Scala environment with local Glue ETL maven library: [Developing Locally with Scala](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-libraries.html). You may also refer to [GlueSparkRuntime](https://github.com/aws-samples/aws-glue-samples/blob/master/GlueCustomConnectors/development/GlueSparkRuntime/README.md) for more details to custom the local environment for advanced testing.
 
