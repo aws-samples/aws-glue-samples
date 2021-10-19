@@ -1,0 +1,10 @@
+{
+  "releasetimestamp": "2021-08-30 07:10:00",
+  "connectiontype": "MARKETPLACE",
+  "classname": "tpcds",
+  "publishername": "AWS Glue",
+  "connectortype": "Spark",
+  "version": "1.0.0-glue3.0",
+  "description": "TPC-DS connector for AWS Glue",
+  "supportinformation": "Please check the instructions."
+}
