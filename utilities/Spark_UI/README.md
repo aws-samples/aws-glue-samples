@@ -18,6 +18,17 @@ If you prefer local access (not to have EC2 instance for Apache Spark history se
 
 
 #### Start the Spark history server
+**Using AWS named profile **
+
+1.  Run commands shown below
+    - Set **LOG_DIR** by replacing **s3a://path_to_eventlog** with your event log directory
+    - Set **PROFILE_NAME** with your AWS named profile
+    ``` 
+        $ LOG_DIR="s3a://path_to_eventlog/"
+        $ PROFILE_NAME="profile_name"
+        $ docker run -itd -v ~/.aws:/root/.aws -e AWS_PROFILE=$PROFILE_NAME -e SPARK_HISTORY_OPTS="$SPARK_HISTORY_OPTS -Dspark.history.fs.logDirectory=$LOG_DIR  -Dspark.hadoop.fs.s3a.aws.credentials.provider=com.amazonaws.auth.DefaultAWSCredentialsProviderChain" -p 18080:18080 glue/sparkui:latest "/opt/spark/bin/spark-class org.apache.spark.deploy.history.HistoryServer"
+    ```
+
 **Using a pair of AWS access key and secret key**
 1.  Run commands shown below
     - Set **LOG_DIR** by replacing **s3a://path_to_eventlog** with your event log directory
