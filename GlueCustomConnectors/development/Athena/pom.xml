@@ -19,7 +19,7 @@
 
     <properties>
         <slf4jVersion>1.7.30</slf4jVersion>
-        <log4j2Version>2.15.0</log4j2Version>
+        <log4j2Version>2.16.0</log4j2Version>
     </properties>
 
     <dependencies>
