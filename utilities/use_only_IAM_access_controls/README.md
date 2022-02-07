@@ -7,7 +7,13 @@ AWS Lake Formation applies its own permission model when you access data in Amaz
 You can run this script in any location where you have Python3 and AWS credentials.
 
 ```
-$ python update_permission.py
+$ python3 update_permission.py
+```
+
+You can provide an AWS named profile name, and/or Region name.
+
+```
+$ python3 update_permission.py -r us-west-2 -p <your-profile-name>
 ```
 
 You need use AWS credentials of the IAM user/role who has Lake Formation admin permission. If you run the script without Lake Formation admin permission, you will see ‘Access Denied’ exception.
