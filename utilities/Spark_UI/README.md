@@ -19,7 +19,7 @@ If you prefer local access (not to have EC2 instance for Apache Spark history se
 
 #### Start the Spark history server
 
-**Using AWS named profile **
+**Using AWS named profile**
 1.  Run commands shown below
     - Set **LOG_DIR** by replacing **s3a://path_to_eventlog** with your event log directory
     - Set **PROFILE_NAME** with your AWS named profile
