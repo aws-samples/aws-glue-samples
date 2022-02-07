@@ -1,9 +1,41 @@
-# Copyright 2019-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2019-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
+import sys
 import boto3
+import argparse
 
-session = boto3.Session()
+
+# 0. Configure credentials and required parameters
+parser = argparse.ArgumentParser()
+parser.add_argument('-p', '--profile', help='AWS named profile name')
+parser.add_argument('-r', '--region', help='Region name')
+args = parser.parse_args()
+
+session_args = {}
+if args.profile is not None:
+    session_args['profile_name'] = args.profile
+    print(f"boto3 Session uses {args.profile} profile based on the argument.")
+if args.region is not None:
+    session_args['region_name'] = args.region
+    print(f"boto3 Session uses {args.region} region based on the argument.")
+
+session = boto3.Session(**session_args)
+sts = session.client('sts')
+account_id = sts.get_caller_identity().get('Account')
+print(f"- Account: {account_id}\n- Profile: {session.profile_name}\n- Region: {session.region_name}")
+
+
+def prompt(message):
+    answer = input(message)
+    if answer.lower() in ["n","no"]:
+        sys.exit(0)
+    elif answer.lower() not in ["y","yes"]:
+        prompt(message)
+
+
+prompt(f"Are you sure to make modifications on Lake Formation permissions to use only IAM access control? (y/n): ")
+
 glue = session.client('glue')
 lakeformation = session.client('lakeformation')
 
@@ -43,6 +75,11 @@ for page in get_databases_paginator.paginate():
     databases.extend(page['DatabaseList'])
 for d in databases:
     print(f"... Granting permissions on database {d['Name']} ...")
+
+    # Skip database if it is a resource link
+    if 'TargetDatabase' in d:
+        print(f"Database {d['Name']} is skipped since it is a resource link.")
+        continue
 
     # 4.1. Grant ALL to IAM_ALLOWED_PRINCIPALS for existing databases
     database_resource = {'Database': {'Name': d['Name']}}
@@ -89,11 +126,25 @@ for d in databases:
 
     for t in tables:
         print(f"... Granting permissions on table {d['Name']} ...")
+
+        # Skip table if it is a resource link
+        if 'TargetTable' in t:
+            print(f"Table {d['Name']} is skipped since it is a resource link.")
+            continue
+
         table_resource = {'Table': {'DatabaseName': d['Name'], 'Name': t['Name']}}
         lakeformation.grant_permissions(Principal=iam_allowed_principal,
                                         Resource=table_resource,
                                         Permissions=['ALL'],
                                         PermissionsWithGrantOption=[])
+
+def get_catalog_id(resource):
+    for key in resource.keys():
+        if isinstance(resource[key], dict):
+            return get_catalog_id(resource[key])
+        elif 'CatalogId' == key:
+            return resource[key]
+
 
 # 5. Revoke all the permissions except IAM_ALLOWED_PRINCIPALS
 print('5. Revoking all the permissions except IAM_ALLOWED_PRINCIPALS...')
@@ -105,6 +156,12 @@ while 'NextToken' in res:
 for p in permissions:
     if p['Principal']['DataLakePrincipalIdentifier'] != 'IAM_ALLOWED_PRINCIPALS':
         print(f"... Revoking permissions of {p['Principal']['DataLakePrincipalIdentifier']} on resource {p['Resource']} ...")
+
+        # Skip resource if it is not owned by this account
+        catalog_id = get_catalog_id(p['Resource'])
+        if catalog_id != account_id:
+            print(f"The resource '{p['Resource']}' is skipped since it is not owned by the account {account_id}.")
+            continue
         try:
             lakeformation.revoke_permissions(Principal=p['Principal'],
                                              Resource=p['Resource'],
