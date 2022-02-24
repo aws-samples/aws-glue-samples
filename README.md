@@ -54,10 +54,14 @@ repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs)
    You can use this Dockerfile to run Spark history server in your container.
    See details: [Launching the Spark History Server and Viewing the Spark UI Using Docker ](https://docs.aws.amazon.com/glue/latest/dg/monitor-spark-ui-history.html#monitor-spark-ui-history-local)
 
- - [use only IAM access controls](utilities/use_only_IAM_access_controls/README.md)
- 
-   AWS Lake Formation applies its own permission model when you access data in Amazon S3 and metadata in AWS Glue Data Catalog through use of Amazon EMR, Amazon Athena and so on. 
-   If you currently use Lake Formation and instead would like to use only IAM Access controls, this tool enables you to achieve it.
+- [use only IAM access controls](utilities/use_only_IAM_access_controls/README.md)
+
+  AWS Lake Formation applies its own permission model when you access data in Amazon S3 and metadata in AWS Glue Data Catalog through use of Amazon EMR, Amazon Athena and so on.
+  If you currently use Lake Formation and instead would like to use only IAM Access controls, this tool enables you to achieve it.
+
+- [Glue Job Version Deprecation Checker](utilities/glue_version_deprecation_checker/README.md)
+
+  This command line utility helps you to identify the target Glue jobs which will be deprecated per [AWS Glue version support policy](https://docs.aws.amazon.com/glue/latest/dg/glue-version-support-policy.html).
 
 ### GlueCustomConnectors
 AWS Glue provides [built-in support](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-connect.html) for the most commonly used data stores such as Amazon Redshift, MySQL, MongoDB. Powered by Glue ETL Custom Connector, you can subscribe a third-party connector from AWS Marketplace or build your own connector to connect to data stores that are not natively supported.
