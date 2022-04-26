@@ -54,7 +54,7 @@ call_help(){
 
   # To create a Dockerfile
 cat > Dockerfile <<- "EOF"
-FROM amazonlinux:2.0.20210721.2
+FROM amazonlinux:latest
 COPY ./connector_jars  ./jars
 EOF
  
