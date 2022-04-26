@@ -2,6 +2,25 @@
 
 AWS Lake Formation applies its own permission model when you access data in Amazon S3 and metadata in AWS Glue Data Catalog through use of Amazon EMR, Amazon Athena and so on. If you currently use Lake Formation and instead would like to use only IAM Access controls, this tool enables you to achieve it.
 
+### Command line Syntax
+```
+$ update_permission.py [-h] [-p PROFILE] [-r REGION] [-g GLOBAL_CONF] [-d TARGET_DATABASES] [--skip-errors] [--dryrun] [-v]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PROFILE, --profile PROFILE
+                        AWS named profile name
+  -r REGION, --region REGION
+                        AWS Region (e.g. "us-east-1")
+  -g GLOBAL_CONF, --global GLOBAL_CONF
+                        (Optional) Update global configurations; Data Lake Settings and Data lake locations (default: true)
+  -d TARGET_DATABASES, --databases TARGET_DATABASES
+                        (Optional) The comma separated list of target database names (default: all databases)
+  --skip-errors         (Optional) Skip errors and continue execution. (default: false)
+  --dryrun              (Optional) Display the operations that would be performed using the specified command without actually running them (default: false)
+  -v, --verbose         (Optional) Display verbose logging (default: false)
+```
+
 ## How to use it
 
 You can run this script in any location where you have Python3 and AWS credentials.
