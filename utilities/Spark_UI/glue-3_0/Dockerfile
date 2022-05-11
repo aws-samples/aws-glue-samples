@@ -12,7 +12,14 @@ RUN tar -xzf spark-3.1.1-bin-without-hadoop.tgz && \
     rm spark-3.1.1-bin-without-hadoop.tgz
 RUN mvn dependency:copy-dependencies -DoutputDirectory=/opt/spark/jars/
 RUN rm /opt/spark/jars/jsr305-3.0.0.jar && \
-    rm /opt/spark/jars/jersey-*-1.19.jar
+    rm /opt/spark/jars/jersey-*-1.19.jar && \
+    rm /opt/spark/jars/jackson-dataformat-cbor-2.6.7.jar && \
+    rm /opt/spark/jars/joda-time-2.8.1.jar && \
+    rm /opt/spark/jars/jmespath-java-*.jar && \
+    rm /opt/spark/jars/aws-java-sdk-core-*.jar && \
+    rm /opt/spark/jars/aws-java-sdk-kms-*.jar && \
+    rm /opt/spark/jars/aws-java-sdk-s3-*.jar && \
+    rm /opt/spark/jars/ion-java-1.0.2.jar
 
 RUN echo $'\n\
 spark.eventLog.enabled                      true\n\
