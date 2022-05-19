@@ -1,6 +1,6 @@
 #  Copyright 2016-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: MIT-0
-# Work with Glue 2.0 and Glue 3.0
+# Work with Python 3 in Glue 2.0 and Glue 3.0
 
 from __future__ import print_function
 

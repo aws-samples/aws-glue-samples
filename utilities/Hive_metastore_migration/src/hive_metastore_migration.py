@@ -342,7 +342,6 @@ class HiveMetastoreTransformer:
                 del dictionary[None]
             return dictionary
 
-
         id_type = df.get_schema_type(id_col)
         map_type = MapType(keyType=df.get_schema_type(key), valueType=df.get_schema_type(value))
         output_schema = StructType([StructField(name=id_col, dataType=id_type, nullable=False),
@@ -407,8 +406,6 @@ class HiveMetastoreTransformer:
         schema = StructType([StructField(name=id_col, dataType=LongType(), nullable=False),
                              StructField(name=payloads_column_name, dataType=ArrayType(elementType=payload_type))])
         return self.sql_context.createDataFrame(rdd_result, schema)
-
-
 
     def transform_ms_partition_keys(self, ms_partition_keys):
         return self.transform_df_with_idx(df=ms_partition_keys,
@@ -688,7 +685,6 @@ class HiveMetastoreTransformer:
             ('IS_COMPRESSED', 'compressed'),
             ('IS_STOREDASSUBDIRECTORIES', 'storedAsSubDirectories')
         ])
-
 
         storage_descriptors_with_empty_sorted_cols = HiveMetastoreTransformer.fill_none_with_empty_list(
             storage_descriptors_renamed, 'sortColumns')
