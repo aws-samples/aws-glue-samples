@@ -1,12 +1,15 @@
 #  Copyright 2016-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: MIT-0
 
+# Work with Glue 2.0 and Glue 3.0
+
 from __future__ import print_function
 
 from awsglue.context import GlueContext
 from awsglue.dynamicframe import DynamicFrame
 
 from hive_metastore_migration import *
+
 
 
 def transform_df_to_catalog_import_schema(sql_context, glue_context, df_databases, df_tables, df_partitions):

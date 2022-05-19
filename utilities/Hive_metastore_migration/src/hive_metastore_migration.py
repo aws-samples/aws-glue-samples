@@ -173,20 +173,20 @@ def construct_struct_schema(schema_tuples_list):
     return StructType(struct_fields)
 
 
-def empty(df):
-    return df.rdd.isEmpty()
+def empty(self):
+    return self.rdd.isEmpty()
 
 
-def drop_columns(df, columns_to_drop):
+def drop_columns(self, columns_to_drop):
     for col in columns_to_drop:
-        df = df.drop(col)
-    return df
+        self = self.drop(col)
+    return self
 
 
 def rename_columns(df, rename_tuples=None):
     """
     Rename columns, for each key in rename_map, rename column from key to value
-    :param df: dataframe
+    :param self: dataframe
     :param rename_map: map for columns to be renamed
     :return: new dataframe with columns renamed
     """
@@ -194,12 +194,26 @@ def rename_columns(df, rename_tuples=None):
         df = df.withColumnRenamed(old, new)
     return df
 
+def rename_columns_for_class(self, rename_tuples=None):
+    """
+    Rename columns, for each key in rename_map, rename column from key to value
+    :param self: dataframe
+    :param rename_map: map for columns to be renamed
+    :return: new dataframe with columns renamed
+    """
+    for old, new in rename_tuples:
+        self = self.withColumnRenamed(old, new)
+    return self
+
 
 def get_schema_type(df, column_name):
     return df.select(column_name).schema.fields[0].dataType
 
+def get_schema_type_for_class(self, column_name):
+    return self.select(column_name).schema.fields[0].dataType
 
-def join_other_to_single_column(df, other, on, how, new_column_name):
+
+def join_other_to_single_column(self, other, on, how, new_column_name):
     """
     :param df: this dataframe
     :param other: other dataframe
@@ -213,7 +227,7 @@ def join_other_to_single_column(df, other, on, how, new_column_name):
     """
     other_cols = remove(other.columns, on)
     other_combined = other.select([on, struct(other_cols).alias(new_column_name)])
-    return df.join(other=other_combined, on=on, how=how)
+    return self.join(other=other_combined, on=on, how=how)
 
 
 def batch_items_within_partition(sql_context, df, key_col, value_col, values_col):
@@ -270,11 +284,16 @@ def register_methods_to_dataframe():
     Register self-defined helper methods to dataframe
     """
     if PYTHON_VERSION==3:
-        DataFrame.empty = MethodType(empty, DataFrame)
-        DataFrame.drop_columns = MethodType(drop_columns, DataFrame)
-        DataFrame.rename_columns = MethodType(rename_columns, DataFrame)
-        DataFrame.get_schema_type = MethodType(get_schema_type, DataFrame)
-        DataFrame.join_other_to_single_column = MethodType(join_other_to_single_column, DataFrame)
+        DataFrame.empty = empty
+        DataFrame.drop_columns = drop_columns
+        DataFrame.rename_columns = rename_columns_for_class
+        DataFrame.get_schema_type = get_schema_type_for_class
+        DataFrame.join_other_to_single_column = join_other_to_single_column
+        # DataFrame.empty = MethodType(empty, DataFrame)
+        # DataFrame.drop_columns = MethodType(drop_columns, DataFrame)
+        # DataFrame.rename_columns = MethodType(rename_columns, DataFrame)
+        # DataFrame.get_schema_type = MethodType(get_schema_type, DataFrame)
+        # DataFrame.join_other_to_single_column = MethodType(join_other_to_single_column, DataFrame)
     else:
         DataFrame.empty = MethodType(empty, None, DataFrame)
         DataFrame.drop_columns = MethodType(drop_columns, None, DataFrame)
@@ -323,6 +342,7 @@ class HiveMetastoreTransformer:
                 del dictionary[None]
             return dictionary
 
+
         id_type = df.get_schema_type(id_col)
         map_type = MapType(keyType=df.get_schema_type(key), valueType=df.get_schema_type(value))
         output_schema = StructType([StructField(name=id_col, dataType=id_type, nullable=False),
@@ -330,7 +350,9 @@ class HiveMetastoreTransformer:
 
         return self.sql_context.createDataFrame(
             df.rdd.map(lambda row: (row[id_col], {row[key]: row[value]})).reduceByKey(merge_dict).map(
-                lambda id_name, dictionary: (id_name, remove_none_key(dictionary))), output_schema)
+                lambda rec: (rec[0], remove_none_key(rec[1]))), output_schema)
+
+    #lambda id_name, dictionary: (id_name, remove_none_key(dictionary))), output_schema)
 
     def join_with_params(self, df, df_params, id_col):
         df_params_map = self.transform_params(params_df=df_params, id_col=id_col)
@@ -376,12 +398,17 @@ class HiveMetastoreTransformer:
         """
         rdd_result = df.rdd.map(lambda row: (row[id_col], (row[idx], payload_func(row)))) \
             .aggregateByKey([], append, extend) \
-            .map(lambda id_column, list_with_idx: (id_column, sorted(list_with_idx, key=lambda t: t[0]))) \
-            .map(lambda id_column, list_with_idx: (id_column, [payload for index, payload in list_with_idx]))
+            .map(lambda rec: (rec[0], sorted(rec[1], key=lambda t: t[0]))) \
+            .map(lambda rec: (rec[0], [payload for index, payload in rec[1]]))
+
+        # .map(lambda id_column, list_with_idx: (id_column, sorted(list_with_idx, key=lambda t: t[0]))) \
+        # .map(lambda id_column, list_with_idx: (id_column, [payload for index, payload in list_with_idx]))
 
         schema = StructType([StructField(name=id_col, dataType=LongType(), nullable=False),
                              StructField(name=payloads_column_name, dataType=ArrayType(elementType=payload_type))])
         return self.sql_context.createDataFrame(rdd_result, schema)
+
+
 
     def transform_ms_partition_keys(self, ms_partition_keys):
         return self.transform_df_with_idx(df=ms_partition_keys,
@@ -534,7 +561,7 @@ class HiveMetastoreTransformer:
         :type date_cols_map: dict
         :return: dataframe
         """
-        for k, v in date_cols_map.iteritems():
+        for k, v in date_cols_map.items():
             df = HiveMetastoreTransformer.utc_timestamp_to_iso8601_time(df, k, v)
         return df
 
@@ -661,6 +688,7 @@ class HiveMetastoreTransformer:
             ('IS_COMPRESSED', 'compressed'),
             ('IS_STOREDASSUBDIRECTORIES', 'storedAsSubDirectories')
         ])
+
 
         storage_descriptors_with_empty_sorted_cols = HiveMetastoreTransformer.fill_none_with_empty_list(
             storage_descriptors_renamed, 'sortColumns')
@@ -816,7 +844,7 @@ class DataCatalogTransformer:
 
     @staticmethod
     def udf_milliseconds_str_to_timestamp(milliseconds_str):
-        return 0 if milliseconds_str is None else long(milliseconds_str) / 1000
+        return 0 if milliseconds_str is None else int(milliseconds_str) / 1000
 
     @staticmethod
     def udf_string_list_str_to_list(str):
@@ -938,6 +966,9 @@ class DataCatalogTransformer:
     def reformat_tbls(self, ms_tbls):
         # reformat CREATE_TIME and LAST_ACCESS_TIME
         ms_tbls = DataCatalogTransformer.column_date_to_timestamp(ms_tbls, 'createTime')
+        import time
+        create_timestamp = int(time.time() * 1.0)
+        ms_tbls = ms_tbls.withColumn("createTime",lit(create_timestamp))
         ms_tbls = DataCatalogTransformer.column_date_to_timestamp(ms_tbls, 'lastAccessTime')
 
         ms_tbls = rename_columns(df=ms_tbls, rename_tuples=[
@@ -1266,6 +1297,8 @@ class HiveMetastore:
         """
         Write from Spark Dataframe into a JDBC table
         """
+        table = '%s.%s' % (db_name, table_name)
+        logging.info("hive_metastore_migration:write_table. URL: " + connection['url'] + ", table: " + table)
         return df.write.jdbc(
             url=connection['url'],
             table='%s.%s' % (db_name, table_name),
@@ -1302,7 +1335,6 @@ class HiveMetastore:
 
     # order of write matters here
     def export_to_metastore(self):
-        self.ms_dbs.show()
         self.write_table(connection=self.connection, table_name='DBS', df=self.ms_dbs)
         self.write_table(connection=self.connection, table_name='DATABASE_PARAMS', df=self.ms_database_params)
         self.write_table(connection=self.connection, table_name='CDS', df=self.ms_cds)
