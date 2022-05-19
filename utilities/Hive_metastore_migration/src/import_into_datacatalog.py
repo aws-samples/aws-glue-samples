@@ -2,7 +2,6 @@
 #  SPDX-License-Identifier: MIT-0
 
 # Work with Python 3 in Glue 2.0 and Glue 3.0
-
 from __future__ import print_function
 
 from awsglue.context import GlueContext

@@ -289,11 +289,6 @@ def register_methods_to_dataframe():
         DataFrame.rename_columns = rename_columns_for_class
         DataFrame.get_schema_type = get_schema_type_for_class
         DataFrame.join_other_to_single_column = join_other_to_single_column
-        # DataFrame.empty = MethodType(empty, DataFrame)
-        # DataFrame.drop_columns = MethodType(drop_columns, DataFrame)
-        # DataFrame.rename_columns = MethodType(rename_columns, DataFrame)
-        # DataFrame.get_schema_type = MethodType(get_schema_type, DataFrame)
-        # DataFrame.join_other_to_single_column = MethodType(join_other_to_single_column, DataFrame)
     else:
         DataFrame.empty = MethodType(empty, None, DataFrame)
         DataFrame.drop_columns = MethodType(drop_columns, None, DataFrame)
@@ -351,7 +346,6 @@ class HiveMetastoreTransformer:
             df.rdd.map(lambda row: (row[id_col], {row[key]: row[value]})).reduceByKey(merge_dict).map(
                 lambda rec: (rec[0], remove_none_key(rec[1]))), output_schema)
 
-    #lambda id_name, dictionary: (id_name, remove_none_key(dictionary))), output_schema)
 
     def join_with_params(self, df, df_params, id_col):
         df_params_map = self.transform_params(params_df=df_params, id_col=id_col)
@@ -399,9 +393,6 @@ class HiveMetastoreTransformer:
             .aggregateByKey([], append, extend) \
             .map(lambda rec: (rec[0], sorted(rec[1], key=lambda t: t[0]))) \
             .map(lambda rec: (rec[0], [payload for index, payload in rec[1]]))
-
-        # .map(lambda id_column, list_with_idx: (id_column, sorted(list_with_idx, key=lambda t: t[0]))) \
-        # .map(lambda id_column, list_with_idx: (id_column, [payload for index, payload in list_with_idx]))
 
         schema = StructType([StructField(name=id_col, dataType=LongType(), nullable=False),
                              StructField(name=payloads_column_name, dataType=ArrayType(elementType=payload_type))])
