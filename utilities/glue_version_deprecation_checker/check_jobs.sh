@@ -39,5 +39,19 @@ echo "Following Glue jobs are going to be deprecated as per AWS Glue's version s
 for region in $regions
 do
     echo "Region: $region"
-    aws glue get-jobs --query 'Jobs[? (GlueVersion==`"0.9"` || GlueVersion==null) && (Command.Name==`"glueetl"` || Command.Name==`"gluestreaming"`) || Command.PythonVersion==`"2"`].{JobName:Name,JobType:Command.Name,GlueVersion:GlueVersion,PythonVersion:Command.PythonVersion}' $profile_option --region $region --output table
+    echo "[End of Support: 2022/6/1] Spark | Glue 0.9"
+    aws glue get-jobs --query 'Jobs[? (GlueVersion==`"0.9"` || GlueVersion==null) && (Command.Name==`"glueetl"` || Command.Name==`"gluestreaming"`)].{JobName:Name,JobType:Command.Name,GlueVersion:GlueVersion,PythonVersion:Command.PythonVersion}' $profile_option --region $region --output table
+
+    echo "[End of Support: 2022/6/1] Spark | Glue 1.0 (Python 2)"
+    aws glue get-jobs --query 'Jobs[? GlueVersion==`"1.0"` && (Command.Name==`"glueetl"` || Command.Name==`"gluestreaming"`) && Command.PythonVersion==`"2"`].{JobName:Name,JobType:Command.Name,GlueVersion:GlueVersion,PythonVersion:Command.PythonVersion}' $profile_option --region $region --output table
+
+    echo "[End of Support: 2022/6/1] Python shell | Glue 1.0 (Python 2)"
+    aws glue get-jobs --query 'Jobs[? Command.Name==`"pythonshell"` && Command.PythonVersion==`"2"`].{JobName:Name,JobType:Command.Name,GlueVersion:GlueVersion,PythonVersion:Command.PythonVersion}' $profile_option --region $region --output table
+
+    echo "[End of Support: 2022/9/30] Spark | Glue 1.0 (Python 3, Scala 2)"
+    aws glue get-jobs --query 'Jobs[? GlueVersion==`"1.0"` && (Command.Name==`"glueetl"` || Command.Name==`"gluestreaming"`) && Command.PythonVersion!=`"2"`].{JobName:Name,JobType:Command.Name,GlueVersion:GlueVersion,PythonVersion:Command.PythonVersion}' $profile_option --region $region --output table
+
+    echo "[End of Support: 2023/3/31] Spark | Glue 2.0"
+    aws glue get-jobs --query 'Jobs[? GlueVersion==`"2.0"` && (Command.Name==`"glueetl"` || Command.Name==`"gluestreaming"`)].{JobName:Name,JobType:Command.Name,GlueVersion:GlueVersion,PythonVersion:Command.PythonVersion}' $profile_option --region $region --output table
+
 done
