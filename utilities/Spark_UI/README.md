@@ -52,7 +52,19 @@ If you prefer local access (not to have EC2 instance for Apache Spark history se
         $ docker run -itd -e SPARK_HISTORY_OPTS="$SPARK_HISTORY_OPTS -Dspark.history.fs.logDirectory=$LOG_DIR -Dspark.hadoop.fs.s3a.access.key=$AWS_ACCESS_KEY_ID -Dspark.hadoop.fs.s3a.secret.key=$AWS_SECRET_ACCESS_KEY -Dspark.hadoop.fs.s3a.session.token=$AWS_SESSION_TOKEN -Dspark.hadoop.fs.s3a.aws.credentials.provider=org.apache.hadoop.fs.s3a.TemporaryAWSCredentialsProvider" -p 18080:18080 glue/sparkui:latest "/opt/spark/bin/spark-class org.apache.spark.deploy.history.HistoryServer"
     ```
     
-These configuration parameters come from the [Hadoop-AWS Module](https://hadoop.apache.org/docs/stable/hadoop-aws/tools/hadoop-aws/index.html).  You may need to add specific configuration based on your use case.  For example: users in isolated regions will need to configure the `spark.hadoop.fs.s3a.endpoint`.
+These configuration parameters come from the [Hadoop-AWS Module](https://hadoop.apache.org/docs/stable/hadoop-aws/tools/hadoop-aws/index.html). You may need to add specific configuration based on your use case. For example: users in isolated regions will need to configure the `spark.hadoop.fs.s3a.endpoint`.
+
+For Beijing region, add following config:
+
+```
+-Dspark.hadoop.fs.s3a.endpoint=s3.cn-north-1.amazonaws.com.cn
+```
+
+For Ningxia region, add following config:
+```
+-Dspark.hadoop.fs.s3a.endpoint=s3.cn-northwest-1.amazonaws.com.cn
+```
+
 
 #### View the Spark UI using Docker
 1. Open http://localhost:18080 in your browser
