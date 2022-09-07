@@ -295,6 +295,11 @@ def revoke_all_permissions():
                     continue
 
             logger.info(f"... Revoking permissions of {p['Principal']['DataLakePrincipalIdentifier']} on the {resource_type} resource '{resource_name}' ...")
+
+            # When `TableWildcard` field exists, remove `Name` field because RevokePermissions API does not accept the resource input having both `Name` and `TableWildcard`.
+            if resource_type == "Table" and 'TableWildcard' in p['Resource']['Table']:
+                del p['Resource']['Table']['Name']
+
             if do_update:
                 try:
                     lakeformation.revoke_permissions(Principal=p['Principal'],
