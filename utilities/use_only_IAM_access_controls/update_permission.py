@@ -300,6 +300,14 @@ def revoke_all_permissions():
             if resource_type == "Table" and 'TableWildcard' in p['Resource']['Table']:
                 del p['Resource']['Table']['Name']
 
+            # When `ColumnWildcard` field exists for `ALL_TABLES`, replace `TableWithColumns` resource with `Table` resource, and call RevokePermission API with `TableWildcard`.
+            if resource_type == "TableWithColumns" and 'ColumnWildcard' in p['Resource']['TableWithColumns'] and 'Name' in p['Resource']['TableWithColumns'] and p['Resource']['TableWithColumns']['Name'] == "ALL_TABLES":
+                p['Resource']['Table'] = {}
+                p['Resource']['Table']['CatalogId'] = p['Resource']['TableWithColumns']['CatalogId']
+                p['Resource']['Table']['DatabaseName'] = p['Resource']['TableWithColumns']['DatabaseName']
+                p['Resource']['Table']['TableWildcard'] = {}
+                del p['Resource']['TableWithColumns']
+
             if do_update:
                 try:
                     lakeformation.revoke_permissions(Principal=p['Principal'],
@@ -307,6 +315,7 @@ def revoke_all_permissions():
                                                      Permissions=p['Permissions'],
                                                      PermissionsWithGrantOption=p['PermissionsWithGrantOption'])
                 except Exception as e:
+                    logger.error(f"Error occurred in the argument: {p}")
                     if args.skip_errors:
                         logger.error(f"Skipping error: {e}", exc_info=True)
                     else:
