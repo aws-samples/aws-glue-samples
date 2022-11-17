@@ -107,11 +107,20 @@ def grant_db_perm_to_iam_allowed_principals():
     """
     logger.info('3. Granting CREATE_DATABASE to IAM_ALLOWED_PRINCIPALS for catalog...')
     catalog_resource = {'Catalog': {}}
+
     if do_update:
-        lakeformation.grant_permissions(Principal=iam_allowed_principal,
-                                        Resource=catalog_resource,
-                                        Permissions=['CREATE_DATABASE'],
-                                        PermissionsWithGrantOption=[])
+        try:
+            lakeformation.grant_permissions(Principal=iam_allowed_principal,
+                                            Resource=catalog_resource,
+                                            Permissions=['CREATE_DATABASE'],
+                                            PermissionsWithGrantOption=[])
+        except Exception as e:
+            logger.error(f"Error occurred in the resource: {catalog_resource}")
+            if args.skip_errors:
+                logger.error(f"Skipping error: {e}", exc_info=True)
+            else:
+                raise
+
     logger.info('Done.')
 
 
@@ -140,10 +149,17 @@ def grant_all_to_iam_allowed_principals_for_database_table():
         logger.info(f"... Granting ALL permissions to IAM_ALLOWED_PRINCIPALS on database '{database_name}' ...")
         database_resource = {'Database': {'Name': database_name}}
         if do_update:
-            lakeformation.grant_permissions(Principal=iam_allowed_principal,
-                                            Resource=database_resource,
-                                            Permissions=['ALL'],
-                                            PermissionsWithGrantOption=[])
+            try:
+                lakeformation.grant_permissions(Principal=iam_allowed_principal,
+                                                Resource=database_resource,
+                                                Permissions=['ALL'],
+                                                PermissionsWithGrantOption=[])
+            except Exception as e:
+                logger.error(f"Error occurred in the resource: {database_resource}")
+                if args.skip_errors:
+                    logger.error(f"Skipping error: {e}", exc_info=True)
+                else:
+                    raise
 
         # 4.2. Update CreateTableDefaultPermissions of database
         location_uri = d.get('LocationUri')
@@ -194,10 +210,17 @@ def grant_all_to_iam_allowed_principals_for_database_table():
             logger.info(f"... Granting ALL permissions to IAM_ALLOWED_PRINCIPALS on table '{database_name}.{table_name}' ...")
             table_resource = {'Table': {'DatabaseName': database_name, 'Name': table_name}}
             if do_update:
-                lakeformation.grant_permissions(Principal=iam_allowed_principal,
-                                                Resource=table_resource,
-                                                Permissions=['ALL'],
-                                                PermissionsWithGrantOption=[])
+                try:
+                    lakeformation.grant_permissions(Principal=iam_allowed_principal,
+                                                    Resource=table_resource,
+                                                    Permissions=['ALL'],
+                                                    PermissionsWithGrantOption=[])
+                except Exception as e:
+                    logger.error(f"Error occurred in the resource: {table_resource}")
+                    if args.skip_errors:
+                        logger.error(f"Skipping error: {e}", exc_info=True)
+                    else:
+                        raise
     logger.info('Done.')
 
 
