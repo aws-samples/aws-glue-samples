@@ -20,7 +20,7 @@ This document describes how to use [Cloud Shuffle Plugin](https://docs.aws.amazo
        --conf spark.shuffle.storage.path=gs://<GCS Shuffle Bucket>/<shuffle dir> \
        --conf spark.hadoop.fs.gs.impl=com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem \
        ```
-6. Set up the permission to access the shuffle bucket, choose [appropriate authentication mechanism](https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/CONFIGURATION.md#authentication), and set the credentials for Google Cloud Storage. Hereâ€™s two examples for authentication:
+6. Set up the permission to access the shuffle bucket, choose [appropriate authentication mechanism](https://github.com/GoogleCloudDataproc/hadoop-connectors/blob/master/gcs/CONFIGURATION.md#authentication), and set the credentials for Google Cloud Storage. Here's two examples for authentication:
     1. JSON keyfile service account authentication
         1. ```
            --conf spark.hadoop.fs.gs.auth.type=SERVICE_ACCOUNT_JSON_KEYFILE \
