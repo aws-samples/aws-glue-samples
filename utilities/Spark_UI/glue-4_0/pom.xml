@@ -16,7 +16,7 @@
 		<awssdk.version>1.11.1026</awssdk.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<jackson.version>2.13.3</jackson.version>
-		<jackson.databind.version>2.13.3</jackson.databind.version>
+		<jackson.databind.version>2.13.4.1</jackson.databind.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
