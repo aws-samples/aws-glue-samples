@@ -9,6 +9,7 @@ If you prefer local access (not to have EC2 instance for Apache Spark history se
 
 #### Build docker image
 1. Download a Dockerfile and pom file from in the GitHub repository
+    - For Glue 4.0, download the files under the folder `glue-4_0`.
     - For Glue 3.0, download the files under the folder `glue-3_0`.
     - For Glue 1.0 or 2.0, download the files under the folder `glue-1_0-2_0`.
 2. Run commands shown below
