@@ -37,6 +37,11 @@ repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs)
  
    This sample ETL script shows you how to use AWS Glue job to convert character encoding.
 
+ - [Notebook using open data dake formats](examples/notebooks/)
+
+   The sample iPython notebook files shows you how to use open data dake formats; Apache Hudi, Delta Lake, and Apache Iceberg on AWS Glue Interactive Sessions and AWS Glue Studio Notebook.
+
+
 ### Utilities
 
  - [Hive metastore migration](utilities/Hive_metastore_migration/README.md)
