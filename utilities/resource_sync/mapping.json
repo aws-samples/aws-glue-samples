@@ -1,0 +1,5 @@
+{
+    "123456789012": "234567890123",
+    "aws-glue-assets-123456789012-eu-west-3": "aws-glue-assets-234567890123-eu-west-3",
+    "GlueServiceRoleSourceAccount": "GlueServiceRoleDestinationAccount"
+}
