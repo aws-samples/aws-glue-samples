@@ -39,7 +39,12 @@ repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs)
 
  - [Notebook using open data dake formats](examples/notebooks/)
 
-   The sample iPython notebook files shows you how to use open data dake formats; Apache Hudi, Delta Lake, and Apache Iceberg on AWS Glue Interactive Sessions and AWS Glue Studio Notebook.
+   The sample iPython notebook files show you how to use open data dake formats; Apache Hudi, Delta Lake, and Apache Iceberg on AWS Glue Interactive Sessions and AWS Glue Studio Notebook.
+
+
+ - [Blueprint examples](https://github.com/awslabs/aws-glue-blueprint-libs)
+
+   The sample Glue Blueprints show you how to implement blueprints addressing common use-cases in ETL. The samples are located under [aws-glue-blueprint-libs](https://github.com/awslabs/aws-glue-blueprint-libs) repository.
 
 
 ### Utilities
