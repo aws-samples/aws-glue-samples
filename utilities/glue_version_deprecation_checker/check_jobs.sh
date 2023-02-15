@@ -51,7 +51,7 @@ do
     echo "[End of Support: 2022/9/30] Spark | Glue 1.0 (Python 3, Scala 2)"
     aws glue get-jobs --query 'Jobs[? GlueVersion==`"1.0"` && (Command.Name==`"glueetl"` || Command.Name==`"gluestreaming"`) && (Command.PythonVersion!=`"2"` || DefaultArguments."--job-language"==`"scala"`)].{JobName:Name,JobType:Command.Name,GlueVersion:GlueVersion,JobLanguage:DefaultArguments."--job-language",PythonVersion:Command.PythonVersion}' $profile_option --region $region --output table
 
-    echo "[End of Support: 2023/3/31] Spark | Glue 2.0"
+    echo "[End of Support: 2024/1/31] Spark | Glue 2.0"
     aws glue get-jobs --query 'Jobs[? GlueVersion==`"2.0"` && (Command.Name==`"glueetl"` || Command.Name==`"gluestreaming"`)].{JobName:Name,JobType:Command.Name,GlueVersion:GlueVersion,JobLanguage:DefaultArguments."--job-language",PythonVersion:Command.PythonVersion}' $profile_option --region $region --output table
 
 done
