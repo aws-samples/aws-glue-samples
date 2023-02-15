@@ -13,7 +13,7 @@
     {
       "name": "newValue",
       "displayName": "New Value for Column",
-      "description": "New value for the column's empty string or values",
+      "description": "New value for the column's empty string or null values",
       "type": "str"
     }
   ]
