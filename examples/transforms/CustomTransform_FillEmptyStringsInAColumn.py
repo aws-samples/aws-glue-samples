@@ -5,8 +5,6 @@ from pyspark.sql.types import StructType
 from pyspark.context import SparkContext
 import pandas as pd
 from pyspark.sql.functions import col,isnan, when, count, regexp_replace
-#from typing import Union
-
 
 def fill_null_values_txn(
     self, columnName, newValue
