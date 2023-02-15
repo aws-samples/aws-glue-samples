@@ -1,8 +1,8 @@
 {
-  "name": "fillEmptyStringColumns",
-  "displayName": "Fill Empty String Columns",
-  "description": "Fill a specified empty string column with values.",
-  "functionName": "fill_empty_string_values_txn",
+  "name": "fillEmptyStringNullColumns",
+  "displayName": "Fill Empty String or Null Columns",
+  "description": "Fill a specified empty string or null column with values.",
+  "functionName": "fill_empty_null_values_txn",
   "parameters": [
     {
       "name": "columnName",
@@ -13,7 +13,7 @@
     {
       "name": "newValue",
       "displayName": "New Value for Column",
-      "description": "New value for the column's empty string or null values",
+      "description": "New value for the column's empty string or values",
       "type": "str"
     }
   ]
