@@ -1,3 +1,5 @@
+# Copyright 2023 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
 import pyspark.sql.functions as F
 from awsglue import DynamicFrame
 from pyspark.sql.dataframe import DataFrame
