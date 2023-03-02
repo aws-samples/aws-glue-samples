@@ -357,7 +357,8 @@ def organize_table_param(table_argument, mapping):
     del table_argument['TableInput']['CreatedBy']
     del table_argument['TableInput']['IsRegisteredWithLakeFormation']
     del table_argument['TableInput']['VersionId']
-    del table_argument['TableInput']['DatabaseId']
+    if 'DatabaseId' in table_argument['TableInput']:
+        del table_argument['TableInput']['DatabaseId']
 
     # Overwrite parameters
     if mapping:
@@ -431,13 +432,14 @@ def synchronize_partitions(database_name, table_name, partitions, mapping):
                     logger.error(f"Skipping error: {err}")
                 else:
                     raise Exception(f"Error: {err}") 
-        res = dst_glue.batch_update_partition(**partition_argument_for_overwrite)
-        for err in res['Errors']:
-            logger.error(f"Error occurred in batch_update_partition called for the table '{database_name}'.'{table_name}'")
-            if args.skip_errors:
-                logger.error(f"Skipping error: {err}")
-            else:
-                raise Exception(f"Error: {err}") 
+        if len(partition_argument_for_overwrite['Entries']) > 0:
+            res = dst_glue.batch_update_partition(**partition_argument_for_overwrite)
+            for err in res['Errors']:
+                logger.error(f"Error occurred in batch_update_partition called for the table '{database_name}'.'{table_name}'")
+                if args.skip_errors:
+                    logger.error(f"Skipping error: {err}")
+                else:
+                    raise Exception(f"Error: {err}")
     logger.info(f"The {len(partitions)} partitions in the table '{database_name}'.'{table_name}' have been created or updated.")
 
 
