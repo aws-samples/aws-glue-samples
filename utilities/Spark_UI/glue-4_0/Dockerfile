@@ -26,4 +26,12 @@ spark.eventLog.enabled                      true\n\
 spark.history.ui.port                       18080\n\
 ' > /opt/spark/conf/spark-defaults.conf
 
+RUN echo $'\n\
+log4j.rootLogger = info, console\n\
+log4j.appender.console=org.apache.log4j.ConsoleAppender\n\
+log4j.appender.console.target = System.out\n\
+log4j.appender.console.layout = org.apache.log4j.PatternLayout\n\
+log4j.appender.console.layout.ConversionPattern = %d{yyyy-MM-dd HH:mm:ss} %p %c{2}: %m%n\n\
+' > /opt/spark/conf/log4j.properties
+
 ENTRYPOINT ["/bin/bash", "-c"]:
