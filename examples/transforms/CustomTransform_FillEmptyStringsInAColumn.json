@@ -1,0 +1,20 @@
+{
+  "name": "fillEmptyStringNullColumns",
+  "displayName": "Fill Empty String or Null Columns",
+  "description": "Fill a specified empty string or null column with values.",
+  "functionName": "fill_empty_null_values_txn",
+  "parameters": [
+    {
+      "name": "columnName",
+      "displayName": "Column Name To Fill",
+      "type": "str",
+      "description": "Enter your column name to replace all empty string or null values with a specified value"
+    },
+    {
+      "name": "newValue",
+      "displayName": "New Value for Column",
+      "description": "New value for the column's empty string or null values",
+      "type": "str"
+    }
+  ]
+}
