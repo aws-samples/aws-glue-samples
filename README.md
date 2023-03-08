@@ -69,9 +69,9 @@ repository at: [awslabs/aws-glue-libs](https://github.com/awslabs/aws-glue-libs)
   AWS Lake Formation applies its own permission model when you access data in Amazon S3 and metadata in AWS Glue Data Catalog through use of Amazon EMR, Amazon Athena and so on.
   If you currently use Lake Formation and instead would like to use only IAM Access controls, this tool enables you to achieve it.
 
-- [Glue Job Sync Utility](utilities/job_sync/README.md)
+- [Glue Resource Sync Utility](utilities/resource_sync/README.md)
 
-  This utility helps you to synchronize Glue Visual jobs from one environment to another without losing visual representation.
+  This utility enables you to synchronize your AWS Glue resources (jobs, databases, tables, and partitions) from one environment (region, account) to another.
 
 - [Glue Job Version Deprecation Checker](utilities/glue_version_deprecation_checker/README.md)
 
