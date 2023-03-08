@@ -177,7 +177,8 @@ def replace_param_with_mapping(param, mapping):
         elif isinstance(v, str):
             for mk, mv in mapping.items():
                 if mk in v:
-                    param[k] = v.replace(mk, mv)
+                    v = v.replace(mk, mv)
+                    param[k] = v
                     logger.info(f"Mapped param {k}: {v} -> {param[k]}")
 
 
