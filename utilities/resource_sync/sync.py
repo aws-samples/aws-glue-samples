@@ -177,9 +177,10 @@ def replace_param_with_mapping(param, mapping):
         elif isinstance(v, str):
             for mk, mv in mapping.items():
                 if mk in v:
+                    v_old = v
                     v = v.replace(mk, mv)
                     param[k] = v
-                    logger.info(f"Mapped param {k}: {v} -> {param[k]}")
+                    logger.info(f"Mapped param {k}: {v_old} -> {param[k]}")
 
 
 def organize_job_param(job, mapping):
