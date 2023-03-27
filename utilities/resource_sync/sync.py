@@ -171,16 +171,24 @@ def replace_param_with_mapping(param, mapping):
         mapping: Mapping configuration to replace the parameter.
 
     """
-    for k, v in param.items():
-        if isinstance(v, dict):
-            replace_param_with_mapping(v, mapping)
-        elif isinstance(v, str):
-            for mk, mv in mapping.items():
-                if mk in v:
-                    v_old = v
-                    v = v.replace(mk, mv)
-                    param[k] = v
-                    logger.info(f"Mapped param {k}: {v_old} -> {param[k]}")
+    if isinstance(param, dict):
+        items = param.items()
+    elif isinstance(param, (list, tuple)):
+        items = enumerate(param)
+    elif isinstance(param, str):
+        for mk, mv in mapping.items():
+             if mk in param:
+                 value_old = param
+                 value = param.replace(mk, mv)
+                 logger.info(f"Mapped param: {value_old} -> {value}")
+                 param = value
+        return param
+    else:
+        return param
+
+    for key, value in items:
+        param[key] = replace_param_with_mapping(value, mapping)
+    return param
 
 
 def organize_job_param(job, mapping):
@@ -270,7 +278,7 @@ def synchronize_job(job_name, mapping):
     # Organize job parameters
     job = organize_job_param(job, mapping)
 
-    # Store source job script path
+    # Store destination job script path
     dst_job_script_s3_url = job['Command']['ScriptLocation']
 
     # Copy job script
