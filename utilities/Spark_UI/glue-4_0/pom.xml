@@ -12,7 +12,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<jdk.version>1.8</jdk.version>
-		<hadoop.version>3.3.2</hadoop.version>
+		<hadoop.version>3.3.3</hadoop.version>
 		<awssdk.version>1.11.1026</awssdk.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<jackson.version>2.13.3</jackson.version>
