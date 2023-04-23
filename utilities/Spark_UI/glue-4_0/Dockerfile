@@ -22,9 +22,10 @@ RUN rm /opt/spark/jars/jsr305-3.0.0.jar && \
     rm /opt/spark/jars/ion-java-1.0.2.jar
 
 RUN echo $'\n\
-spark.eventLog.enabled                      true\n\
-spark.history.ui.port                       18080\n\
-' > /opt/spark/conf/spark-defaults.conf
+    spark.eventLog.enabled                      true\n\
+    spark.history.ui.port                       18080\n\
+    spark.hadoop.fs.s3a.path.style.access       true\n\
+    ' > /opt/spark/conf/spark-defaults.conf
 
 RUN echo $'\n\
 log4j.rootLogger = info, console\n\
