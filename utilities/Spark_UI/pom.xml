@@ -1,4 +1,4 @@
-﻿<project
+<project
 		xmlns="http://maven.apache.org/POM/4.0.0"
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
@@ -16,7 +16,7 @@
 		<awssdk.version>1.11.1026</awssdk.version>
 		<httpclient.version>4.5.13</httpclient.version>
 		<jackson.version>2.13.3</jackson.version>
-		<jackson.databind.version>2.13.3</jackson.databind.version>
+		<jackson.databind.version>2.13.4.2</jackson.databind.version>
 		<reload4j.version>1.2.25</reload4j.version>
 		<slf4j-reload4j.version>1.7.36</slf4j-reload4j.version>
 	</properties>
