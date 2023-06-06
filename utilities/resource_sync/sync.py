@@ -202,10 +202,14 @@ def organize_job_param(job, mapping):
         job: Organized job parameter.
     """
     # Drop unneeded parameters
-    del job['AllocatedCapacity']
-    del job['MaxCapacity']
-    del job['CreatedOn']
-    del job['LastModifiedOn']
+    if 'AllocatedCapacity' in job:
+      del job['AllocatedCapacity']
+    if 'MaxCapacity' in job:
+      del job['MaxCapacity']
+    if 'CreatedOn' in job:
+      del job['CreatedOn']
+    if 'LastModifiedOn' in job:
+      del job['LastModifiedOn']
 
     # Overwrite parameters
     if mapping:
@@ -335,10 +339,14 @@ def organize_partition_param(database_name, table_name, partition_argument, mapp
 
     for arg in partition_argument['PartitionInputList']:
         # Drop unneeded parameters
-        del arg['CatalogId']
-        del arg['DatabaseName']
-        del arg['TableName']
-        del arg['CreationTime']
+        if 'CatalogId' in arg:
+          del arg['CatalogId']
+        if 'DatabaseName' in arg:
+          del arg['DatabaseName']
+        if 'TableName' in arg:
+          del arg['TableName']
+        if 'CreationTime' in arg:
+          del arg['CreationTime']
 
     # Overwrite parameters
     if mapping:
@@ -360,15 +368,22 @@ def organize_table_param(table_argument, mapping):
     table_argument['DatabaseName'] = table_argument['TableInput']['DatabaseName']
 
     # Drop unneeded parameters
-    del table_argument['TableInput']['CatalogId']
-    del table_argument['TableInput']['DatabaseName']
-    del table_argument['TableInput']['CreateTime']
-    del table_argument['TableInput']['UpdateTime']
-    del table_argument['TableInput']['CreatedBy']
-    del table_argument['TableInput']['IsRegisteredWithLakeFormation']
-    del table_argument['TableInput']['VersionId']
+    if 'CatalogId' in table_argument['TableInput']:
+      del table_argument['TableInput']['CatalogId']
+    if 'DatabaseName' in table_argument['TableInput']:
+      del table_argument['TableInput']['DatabaseName']
     if 'DatabaseId' in table_argument['TableInput']:
         del table_argument['TableInput']['DatabaseId']
+    if 'CreateTime' in table_argument['TableInput']:
+      del table_argument['TableInput']['CreateTime']
+    if 'UpdateTime' in table_argument['TableInput']:
+      del table_argument['TableInput']['UpdateTime']
+    if 'CreatedBy' in table_argument['TableInput']:
+      del table_argument['TableInput']['CreatedBy']
+    if 'IsRegisteredWithLakeFormation' in table_argument['TableInput']:
+      del table_argument['TableInput']['IsRegisteredWithLakeFormation']
+    if 'VersionId' in table_argument['TableInput']:
+      del table_argument['TableInput']['VersionId']
 
     # Overwrite parameters
     if mapping:
@@ -388,8 +403,10 @@ def organize_database_param(database_argument, mapping):
         database_argument: Organized database argument parameter.
     """
     # Drop unneeded parameters
-    del database_argument['DatabaseInput']['CatalogId']
-    del database_argument['DatabaseInput']['CreateTime']
+    if 'CatalogId' in database_argument['DatabaseInput']:
+      del database_argument['DatabaseInput']['CatalogId']
+    if 'CreateTime' in database_argument['DatabaseInput']:
+      del database_argument['DatabaseInput']['CreateTime']
 
     # Overwrite parameters
     if mapping:
