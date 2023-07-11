@@ -3,6 +3,7 @@
 
 import json
 import boto3
+import botocore
 from botocore.client import ClientError
 import argparse
 from distutils.util import strtobool
@@ -72,6 +73,10 @@ else:
 for libname in ["boto3", "botocore", "urllib3", "s3transfer"]:
     logging.getLogger(libname).setLevel(logging.WARNING)
 
+logger.debug(f"Python version: {sys.version}")
+logger.debug(f"Version info: {sys.version_info}")
+logger.debug(f"boto3 version: {boto3.__version__}")
+logger.debug(f"botocore version: {botocore.__version__}")
 
 src_session_args = {}
 if args.src_profile is not None:
@@ -270,6 +275,7 @@ def synchronize_job(job_name, mapping):
     # Get DAG per job in the source account
     res = src_glue.get_job(JobName=job_name)
     job = res['Job']
+    logger.debug(f"GetJob API response: {json.dumps(job, indent=4, default=str)}")
 
     # Skip jobs which do not have DAG
     if args.skip_no_dag_jobs and 'CodeGenConfigurationNodes' not in job:
@@ -308,12 +314,12 @@ def synchronize_job(job_name, mapping):
             job_update = {}
             job_update['JobName'] = job_name
             job_update['JobUpdate'] = job
-            logger.debug(f"Updating job '{job_name}' with configuration: '{job_update}'")
+            logger.debug(f"Updating job '{job_name}' with configuration: '{json.dumps(job_update, indent=4, default=str)}'")
             if do_update:
                 dst_glue.update_job(**job_update)
             logger.info(f"The job '{job_name}' has been overwritten.")
     except dst_glue.exceptions.EntityNotFoundException:
-        logger.debug(f"Creating job '{job_name}' with configuration: '{job}'")
+        logger.debug(f"Creating job '{job_name}' with configuration: '{json.dumps(job, indent=4, default=str)}'")
         if do_update:
             dst_glue.create_job(**job)
         logger.info(f"New job '{job_name}' has been created.")
