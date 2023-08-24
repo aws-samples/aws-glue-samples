@@ -1,8 +1,6 @@
-FROM amazonlinux:2
-FROM amazoncorretto:8
-FROM maven:3.6-amazoncorretto-8
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
-RUN yum install -y procps
+RUN dnf --setopt=install_weak_deps=False install -y java-1.8.0-amazon-corretto maven-amazon-corretto8 procps tar gzip && dnf clean all
 
 WORKDIR /tmp/
 ADD pom.xml /tmp
