@@ -32,4 +32,6 @@ log4j.appender.console.layout = org.apache.log4j.PatternLayout\n\
 log4j.appender.console.layout.ConversionPattern = %d{yyyy-MM-dd HH:mm:ss} %p %c{2}: %m%n\n\
 ' > /opt/spark/conf/log4j.properties
 
+ENV JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk/
+
 ENTRYPOINT ["/bin/bash", "-c"]:
