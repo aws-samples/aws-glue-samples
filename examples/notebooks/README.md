@@ -7,11 +7,13 @@ Following examples are based on native connectors.
 ### Apache Hudi
  - [Hudi DataFrame example](native_hudi_dataframe.ipynb)
  - [Hudi Spark SQL example](native_hudi_sql.ipynb)
+ - [Hudi to Redshift incremental load](hudi2redshift-incremental-load.ipynba)
 
 ### Delta Lake
  - [Delta Lake DataFrame example](native_delta_dataframe.ipynb)
  - [Delta Lake Spark SQL example](native_delta_sql.ipynb)
  - [Delta Lake Spark SQL example using S3 path](native_delta_sql_s3path.ipynb)
+ - [Delta to Snowflake incremental load](delta2snowflake-incremental-load.ipynb)
 
 ### Apache Iceberg
  - [Iceberg DataFrame example](native_iceberg_dataframe.ipynb)
