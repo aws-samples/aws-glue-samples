@@ -1,0 +1,2201 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 2,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "<data-source-id>"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 18,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.RESOURCE_NOT_FOUND_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.UNCLASSIFIED_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.TIMEOUT_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "C",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.QUERY_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "D",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.IMPORT_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "E",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.DISK_NO_SPACE_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.COMPILATION_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.CONNECTION_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.INVALID_ARGUMENT_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.PERMISSION_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.SYNTAX_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.THROTTLING_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.DATA_LAKE_FRAMEWORK_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.UNSUPPORTED_OPERATION_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.RESOURCES_ALREADY_EXISTS_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.GLUE_INTERNAL_SERVICE_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.GLUE_OPERATION_TIMEOUT_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.GLUE_VALIDATION_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.GLUE_JOB_BOOKMARK_VERSION_MISMATCH_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.LAUNCH_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.DYNAMODB_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.GLUE_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.LAKEFORMATION_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.REDSHIFT_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.S3_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.SYSTEM_EXIT_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.error.UNCLASSIFIED_SPARK_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "F",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.driver.error.OUT_OF_MEMORY_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "G",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "count"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.executor.error.OUT_OF_MEMORY_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "H",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "[Reliability] Job Run Errors Breakdown",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "<data-source-id>"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "throughput",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Source": "$Source",
+            "Type": "gauge"
+          },
+          "expression": "",
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "glue.driver.bytesRead",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Maximum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "throughput",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Sink": "$Sink",
+            "Type": "gauge"
+          },
+          "expression": "",
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "glue.driver.bytesWritten",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Maximum"
+        }
+      ],
+      "title": "[Throughput] Bytes Read & Write",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "<data-source-id>"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "id": 19,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "throughput",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Source": "$Source",
+            "Type": "gauge"
+          },
+          "expression": "",
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "glue.driver.recordsRead",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Maximum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "throughput",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Sink": "$Sink",
+            "Type": "gauge"
+          },
+          "expression": "",
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "glue.driver.recordsWritten",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Maximum"
+        }
+      ],
+      "title": "[Throughput] Records Read & Write",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "<data-source-id>"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 20,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "resource_utilization",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "gauge"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.driver.workerUtilization",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Average"
+        }
+      ],
+      "title": "[Resource Utilization] Worker Utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "<data-source-id>"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "resource_utilization",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "gauge"
+          },
+          "expression": "",
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.driver.disk.used.percentage",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Average"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "resource_utilization",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "gauge"
+          },
+          "expression": "",
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.ALL.disk.used.percentage",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Average"
+        }
+      ],
+      "title": "[Resource Utilization] Disk Used (%)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "<data-source-id>"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "job_performance",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "gauge"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.driver.skewness.job",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Average"
+        }
+      ],
+      "title": "[Job Performance] Skewness",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "<data-source-id>"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "resource_utilization",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "gauge"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.driver.disk.available_GB",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Average"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "resource_utilization",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "gauge"
+          },
+          "expression": "",
+          "hide": false,
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.ALL.disk.available_GB",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Average"
+        }
+      ],
+      "title": "[Resource Utilization] Disk Available (GB)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "<data-source-id>"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 5,
+        "x": 0,
+        "y": 36
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.4.7",
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "ALL",
+            "Type": "count"
+          },
+          "expression": "",
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.executor.error.OUT_OF_MEMORY_EXCEPTION",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "[Executor OOM] OOM Error Count",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "<data-source-id>"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 19,
+        "x": 5,
+        "y": 36
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "resource_utilization",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "gauge"
+          },
+          "expression": "",
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.ALL.memory.heap.used.percentage",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Average"
+        }
+      ],
+      "title": "[Executor OOM] Heap Memory Used (%)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "<data-source-id>"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 5,
+        "x": 0,
+        "y": 45
+      },
+      "id": 17,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.4.7",
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "error",
+            "JobName": "ALL",
+            "Type": "count"
+          },
+          "expression": "",
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.driver.error.OUT_OF_MEMORY_ERROR",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "[Driver OOM] OOM Error Count",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "<data-source-id>"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 19,
+        "x": 5,
+        "y": 45
+      },
+      "id": 18,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "<data-source-id>"
+          },
+          "dimensions": {
+            "ObservabilityGroup": "resource_utilization",
+            "JobName": "$JobName",
+            "JobRunId": "$JobRunId",
+            "Type": "gauge"
+          },
+          "expression": "",
+          "id": "",
+          "label": "",
+          "logGroups": [],
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "glue.driver.memory.heap.used.percentage",
+          "metricQueryType": 0,
+          "namespace": "Glue",
+          "period": "",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "sqlExpression": "",
+          "statistic": "Average"
+        }
+      ],
+      "title": "[Driver OOM] Heap Memory Used (%)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "revision": 1,
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "ALL"
+          ],
+          "value": [
+            "ALL"
+          ]
+        },
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "<data-source-id>"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "JobName",
+        "options": [],
+        "query": {
+          "accountId": "all",
+          "dimensionKey": "JobName",
+          "metricName": "glue.driver.workerUtilization",
+          "namespace": "Glue",
+          "queryType": "dimensionValues",
+          "refId": "CloudWatchVariableQueryEditor-VariableQuery",
+          "region": "default"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "ALL"
+          ],
+          "value": [
+            "ALL"
+          ]
+        },
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "<data-source-id>"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "JobRunId",
+        "options": [],
+        "query": {
+          "accountId": "all",
+          "dimensionKey": "JobRunId",
+          "metricName": "glue.driver.workerUtilization",
+          "namespace": "Glue",
+          "queryType": "dimensionValues",
+          "refId": "CloudWatchVariableQueryEditor-VariableQuery",
+          "region": "default"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "ALL"
+          ],
+          "value": [
+            "ALL"
+          ]
+        },
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "<data-source-id>"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "Source",
+        "options": [],
+        "query": {
+          "accountId": "all",
+          "dimensionKey": "Source",
+          "metricName": "glue.driver.recordsRead",
+          "namespace": "Glue",
+          "queryType": "dimensionValues",
+          "refId": "CloudWatchVariableQueryEditor-VariableQuery",
+          "region": "default"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "ALL"
+          ],
+          "value": [
+            "ALL"
+          ]
+        },
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "<data-source-id>"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "Sink",
+        "options": [],
+        "query": {
+          "accountId": "all",
+          "dimensionKey": "Sink",
+          "metricName": "glue.driver.recordsWritten",
+          "namespace": "Glue",
+          "queryType": "dimensionValues",
+          "refId": "CloudWatchVariableQueryEditor-VariableQuery",
+          "region": "default"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-2d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "GlueObservability",
+  "uid": "GlueObservability",
+  "version": 1,
+  "weekStart": ""
+}
