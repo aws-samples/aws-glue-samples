@@ -4,7 +4,7 @@
     <artifactId>AWSGlueApp</artifactId>
     <version>1.0-SNAPSHOT</version>
     <name>${project.artifactId}</name>
-    <description>AWS ETL application</description>
+    <description>AWS Glue ETL application</description>
 
         <properties>
             <scala.version>2.12.7</scala.version>
@@ -25,15 +25,20 @@
             <!-- A "provided" dependency, this will be ignored when you package your application -->
             <scope>provided</scope>
     	</dependency>
-	<dependency>
-	    <groupId>org.apache.logging.log4j</groupId>
-	    <artifactId>log4j-core</artifactId>
-	    <version>2.17.2</version>
-       </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.17.2</version>
+           </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
             <version>2.17.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
        </dependency>
     </dependencies>
 
