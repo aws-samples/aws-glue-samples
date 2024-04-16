@@ -99,7 +99,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "A",
+          "refId": "RESOURCE_NOT_FOUND_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -127,7 +127,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "B",
+          "refId": "UNCLASSIFIED_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -155,7 +155,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "C",
+          "refId": "TIMEOUT_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -183,7 +183,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "D",
+          "refId": "QUERY_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -211,7 +211,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "E",
+          "refId": "IMPORT_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -239,7 +239,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "DISK_NO_SPACE_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -267,7 +267,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "COMPILATION_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -295,7 +295,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "CONNECTION_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -323,7 +323,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "INVALID_ARGUMENT_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -351,7 +351,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "PERMISSION_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -379,7 +379,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "SYNTAX_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -407,7 +407,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "THROTTLING_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -435,7 +435,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "DATA_LAKE_FRAMEWORK_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -463,7 +463,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "UNSUPPORTED_OPERATION_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -491,7 +491,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "RESOURCES_ALREADY_EXISTS_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -519,7 +519,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "GLUE_INTERNAL_SERVICE_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -547,7 +547,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "GLUE_OPERATION_TIMEOUT_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -575,7 +575,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "GLUE_VALIDATION_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -603,7 +603,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "GLUE_JOB_BOOKMARK_VERSION_MISMATCH_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -631,7 +631,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "LAUNCH_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -659,7 +659,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "DYNAMODB_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -687,7 +687,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "GLUE_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -715,7 +715,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "LAKEFORMATION_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -743,7 +743,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "REDSHIFT_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -772,7 +772,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "S3_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -801,7 +801,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "SYSTEM_EXIT_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -829,7 +829,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "F",
+          "refId": "UNCLASSIFIED_SPARK_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -857,7 +857,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "G",
+          "refId": "DRIVER_OUT_OF_MEMORY_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
@@ -885,7 +885,7 @@
           "namespace": "Glue",
           "period": "",
           "queryMode": "Metrics",
-          "refId": "H",
+          "refId": "OUT_OF_MEMORY_ERROR",
           "region": "default",
           "sqlExpression": "",
           "statistic": "Sum"
