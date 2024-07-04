@@ -1,5 +1,7 @@
 # Migration between the Hive Metastore and the AWS Glue Data Catalog
 
+**July 2024**: The current recommendation is to use [AWS Glue Data Catalog metadata federation](https://docs.aws.amazon.com/lake-formation/latest/dg/data-sharing-hms.html) instead of migrating your existing metastore to the Glue Data Catalog.
+
 Note: This is a sample script, not supported by AWS officially.
 We recommend you to test and modify it for your data and use-case.
 
