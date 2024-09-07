@@ -21,8 +21,8 @@ You can run this utility in any location where you have Python and the following
 $ sync.py [-h] [--targets TARGETS] [--src-job-names SRC_JOB_NAMES] [--src-database-names SRC_DATABASE_NAMES] [--src-table-names SRC_TABLE_NAMES] [--src-profile SRC_PROFILE] [--src-region SRC_REGION]
                [--src-s3-endpoint-url SRC_S3_ENDPOINT_URL] [--src-sts-endpoint-url SRC_STS_ENDPOINT_URL] [--src-glue-endpoint-url SRC_GLUE_ENDPOINT_URL] [--dst-profile DST_PROFILE]
                [--dst-region DST_REGION] [--dst-s3-endpoint-url DST_S3_ENDPOINT_URL] [--dst-sts-endpoint-url DST_STS_ENDPOINT_URL] [--dst-glue-endpoint-url DST_GLUE_ENDPOINT_URL]
-               [--sts-role-arn STS_ROLE_ARN] [--skip-no-dag-jobs SKIP_NO_DAG_JOBS] [--overwrite-jobs OVERWRITE_JOBS] [--overwrite-databases OVERWRITE_DATABASES] [--overwrite-tables OVERWRITE_TABLES]
-               [--copy-job-script COPY_JOB_SCRIPT] [--config-path CONFIG_PATH] [--skip-errors] [--dryrun] [--skip-prompt] [-v]
+               [--src-role-arn SRC_ROLE_ARN] [--dst-role-arn DST_ROLE_ARN] [--skip-no-dag-jobs SKIP_NO_DAG_JOBS] [--overwrite-jobs OVERWRITE_JOBS] [--overwrite-databases OVERWRITE_DATABASES]
+               [--overwrite-tables OVERWRITE_TABLES] [--copy-job-script COPY_JOB_SCRIPT] [--config-path CONFIG_PATH] [--skip-errors] [--dryrun] [--skip-prompt] [-v]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -53,8 +53,10 @@ optional arguments:
                         Destination endpoint URL for AWS STS.
   --dst-glue-endpoint-url DST_GLUE_ENDPOINT_URL
                         Destination endpoint URL for AWS Glue.
-  --sts-role-arn STS_ROLE_ARN
-                        IAM role arn to be assumed to access destination account resources.
+  --src-role-arn SRC_ROLE_ARN
+                        IAM role ARN to be assumed to access source account resources.
+  --dst-role-arn DST_ROLE_ARN
+                        IAM role ARN to be assumed to access destination account resources.
   --skip-no-dag-jobs SKIP_NO_DAG_JOBS
                         Skip Glue jobs which do not have DAG. (possible values: [true, false]. default: true)
   --overwrite-jobs OVERWRITE_JOBS
@@ -94,12 +96,12 @@ There are two options to configure credentials for accessing resources in target
 
 #### Profile
 
-When you provide `--dst-profile`, this utility uses AWS Named profile set in the option to access resources in the destination account.
+When you provide `--src-profile` or `--dst-profile`, this utility uses AWS Named profile set in the option to access resources in the respective account.
 
 #### STS AssumeRole
 
-When you provide `--sts-role-arn`, this utility assumes the role and use the role to access resources in the destination account.
-You need to create IAM role in the destination account, and configure the trust relationship for the role to allow `AssumeRole` calls from the source account.
+When you provide `--src-role-arn` or `--dst-role-arn`, this utility assumes the role and uses it to access resources in the respective account.
+You need to create IAM roles in the source and/or destination accounts, and configure the trust relationship for the roles to allow `AssumeRole` calls from the account running the script.
 
 ## Examples
 
