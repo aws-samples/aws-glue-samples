@@ -13,108 +13,152 @@ import os
 import sys
 import logging
 
-# Configure credentials and required parameters
-parser = argparse.ArgumentParser()
-parser.add_argument('--targets', dest='targets', type=str, default="job",
-                    help='The comma separated list of targets [job, catalog]. (possible values: [job, catalog]. default: job)')
-parser.add_argument('--src-job-names', dest='src_job_names', type=str,
-                    help='The comma separated list of the names of AWS Glue jobs which are going to be copied from source AWS account. If it is not set, all the Glue jobs in the source account will be copied to the destination account.')
-parser.add_argument('--src-database-names', dest='src_database_names', type=str,
-                    help='The comma separated list of the names of AWS Glue databases which are going to be copied from source AWS account. If it is not set, all the Glue databases in the source account will be copied to the destination account.')
-parser.add_argument('--src-table-names', dest='src_table_names', type=str,
-                    help='The comma separated list of the names of AWS Glue tables which are going to be copied from source AWS account. If it is not set, all the Glue tables in the specified databases will be copied to the destination account.')
-parser.add_argument('--src-profile', dest='src_profile', type=str,
-                    help='AWS named profile name for source AWS account.')
-parser.add_argument('--src-region', dest='src_region',
-                    type=str, help='Source region name.')
-parser.add_argument('--src-s3-endpoint-url', dest='src_s3_endpoint_url',
-                    type=str, help='Source endpoint URL for Amazon S3.')
-parser.add_argument('--src-sts-endpoint-url', dest='src_sts_endpoint_url',
-                    type=str, help='Source endpoint URL for AWS STS.')
-parser.add_argument('--src-glue-endpoint-url', dest='src_glue_endpoint_url',
-                    type=str, help='Source endpoint URL for AWS Glue.')
-parser.add_argument('--dst-profile', dest='dst_profile', type=str,
-                    help='AWS named profile name for destination AWS account.')
-parser.add_argument('--dst-region', dest='dst_region',
-                    type=str, help='Destination region name.')
-parser.add_argument('--dst-s3-endpoint-url', dest='dst_s3_endpoint_url',
-                    type=str, help='Destination endpoint URL for Amazon S3.')
-parser.add_argument('--dst-sts-endpoint-url', dest='dst_sts_endpoint_url',
-                    type=str, help='Destination endpoint URL for AWS STS.')
-parser.add_argument('--dst-glue-endpoint-url', dest='dst_glue_endpoint_url',
-                    type=str, help='Destination endpoint URL for AWS Glue.')
-parser.add_argument('--sts-role-arn', dest='sts_role_arn',
-                    type=str, help='IAM role arn to be assumed to access destination account resources.')
-parser.add_argument('--skip-no-dag-jobs', dest='skip_no_dag_jobs', type=strtobool, default=True,
-                    help='Skip Glue jobs which do not have DAG. (possible values: [true, false]. default: true)')
-parser.add_argument('--overwrite-jobs', dest='overwrite_jobs', type=strtobool, default=True,
-                    help='Overwrite Glue jobs when the jobs already exist. (possible values: [true, false]. default: true)')
-parser.add_argument('--overwrite-databases', dest='overwrite_databases', type=strtobool, default=True,
-                    help='Overwrite Glue databases when the tables already exist. (possible values: [true, false]. default: true)')
-parser.add_argument('--overwrite-tables', dest='overwrite_tables', type=strtobool, default=True,
-                    help='Overwrite Glue tables when the tables already exist. (possible values: [true, false]. default: true)')
-parser.add_argument('--copy-job-script', dest='copy_job_script', type=strtobool, default=True,
-                    help='Copy Glue job script from the source account to the destination account. (possible values: [true, false]. default: true)')
-parser.add_argument('--config-path', dest='config_path', type=str,
-                    help='The config file path to provide parameter mapping. You can set S3 path or local file path.')
-parser.add_argument('--skip-errors', dest='skip_errors', action="store_true", help='(Optional) Skip errors and continue execution. (default: false)')
-parser.add_argument('--dryrun', dest='dryrun', action="store_true", help='(Optional) Display the operations that would be performed using the specified command without actually running them (default: false)')
-parser.add_argument('--skip-prompt', dest='skip_prompt', action="store_true", help='(Optional) Skip prompt (default: false)')
-parser.add_argument('-v', '--verbose', dest='verbose', action="store_true", help='(Optional) Display verbose logging (default: false)')
-args, unknown = parser.parse_known_args()
+# Global variables
+args = None
+logger = None
+src_session = None
+src_glue = None
+src_s3 = None
+dst_session = None
+dst_glue = None
+dst_s3 = None
+dst_s3_client = None
+do_update = None
 
 logger = logging.getLogger()
-logger_handler = logging.StreamHandler(sys.stdout)
-logger.addHandler(logger_handler)
-if args.verbose:
-    logger.setLevel(logging.DEBUG)
-else:
-    logger.setLevel(logging.INFO)
-for libname in ["boto3", "botocore", "urllib3", "s3transfer"]:
-    logging.getLogger(libname).setLevel(logging.WARNING)
 
-logger.debug(f"Python version: {sys.version}")
-logger.debug(f"Version info: {sys.version_info}")
-logger.debug(f"boto3 version: {boto3.__version__}")
-logger.debug(f"botocore version: {botocore.__version__}")
 
-src_session_args = {}
-if args.src_profile is not None:
-    src_session_args['profile_name'] = args.src_profile
-    logger.info(f"Source: boto3 Session uses {args.src_profile} profile based on the argument.")
-if args.src_region is not None:
-    src_session_args['region_name'] = args.src_region
-    logger.info(f"Source: boto3 Session uses {args.src_region} region based on the argument.")
+def parse_arguments():
+    # Configure credentials and required parameters
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--targets', dest='targets', type=str, default="job",
+                        help='The comma separated list of targets [job, catalog]. (possible values: [job, catalog]. default: job)')
+    parser.add_argument('--src-job-names', dest='src_job_names', type=str,
+                        help='The comma separated list of the names of AWS Glue jobs which are going to be copied from source AWS account. If it is not set, all the Glue jobs in the source account will be copied to the destination account.')
+    parser.add_argument('--src-database-names', dest='src_database_names', type=str,
+                        help='The comma separated list of the names of AWS Glue databases which are going to be copied from source AWS account. If it is not set, all the Glue databases in the source account will be copied to the destination account.')
+    parser.add_argument('--src-table-names', dest='src_table_names', type=str,
+                        help='The comma separated list of the names of AWS Glue tables which are going to be copied from source AWS account. If it is not set, all the Glue tables in the specified databases will be copied to the destination account.')
+    parser.add_argument('--src-profile', dest='src_profile', type=str,
+                        help='AWS named profile name for source AWS account.')
+    parser.add_argument('--src-region', dest='src_region',
+                        type=str, help='Source region name.')
+    parser.add_argument('--src-s3-endpoint-url', dest='src_s3_endpoint_url',
+                        type=str, help='Source endpoint URL for Amazon S3.')
+    parser.add_argument('--src-sts-endpoint-url', dest='src_sts_endpoint_url',
+                        type=str, help='Source endpoint URL for AWS STS.')
+    parser.add_argument('--src-glue-endpoint-url', dest='src_glue_endpoint_url',
+                        type=str, help='Source endpoint URL for AWS Glue.')
+    parser.add_argument('--dst-profile', dest='dst_profile', type=str,
+                        help='AWS named profile name for destination AWS account.')
+    parser.add_argument('--dst-region', dest='dst_region',
+                        type=str, help='Destination region name.')
+    parser.add_argument('--dst-s3-endpoint-url', dest='dst_s3_endpoint_url',
+                        type=str, help='Destination endpoint URL for Amazon S3.')
+    parser.add_argument('--dst-sts-endpoint-url', dest='dst_sts_endpoint_url',
+                        type=str, help='Destination endpoint URL for AWS STS.')
+    parser.add_argument('--dst-glue-endpoint-url', dest='dst_glue_endpoint_url',
+                        type=str, help='Destination endpoint URL for AWS Glue.')
+    parser.add_argument('--src-role-arn', dest='src_role_arn', type=str,
+                        help='IAM role ARN to be assumed to access source account resources.')
+    parser.add_argument('--dst-role-arn', dest='dst_role_arn', type=str,
+                        help='IAM role ARN to be assumed to access destination account resources.')
+    parser.add_argument('--skip-no-dag-jobs', dest='skip_no_dag_jobs', type=strtobool, default=True,
+                        help='Skip Glue jobs which do not have DAG. (possible values: [true, false]. default: true)')
+    parser.add_argument('--overwrite-jobs', dest='overwrite_jobs', type=strtobool, default=True,
+                        help='Overwrite Glue jobs when the jobs already exist. (possible values: [true, false]. default: true)')
+    parser.add_argument('--overwrite-databases', dest='overwrite_databases', type=strtobool, default=True,
+                        help='Overwrite Glue databases when the tables already exist. (possible values: [true, false]. default: true)')
+    parser.add_argument('--overwrite-tables', dest='overwrite_tables', type=strtobool, default=True,
+                        help='Overwrite Glue tables when the tables already exist. (possible values: [true, false]. default: true)')
+    parser.add_argument('--copy-job-script', dest='copy_job_script', type=strtobool, default=True,
+                        help='Copy Glue job script from the source account to the destination account. (possible values: [true, false]. default: true)')
+    parser.add_argument('--config-path', dest='config_path', type=str,
+                        help='The config file path to provide parameter mapping. You can set S3 path or local file path.')
+    parser.add_argument('--skip-errors', dest='skip_errors', action="store_true", help='(Optional) Skip errors and continue execution. (default: false)')
+    parser.add_argument('--dryrun', dest='dryrun', action="store_true", help='(Optional) Display the operations that would be performed using the specified command without actually running them (default: false)')
+    parser.add_argument('--skip-prompt', dest='skip_prompt', action="store_true", help='(Optional) Skip prompt (default: false)')
+    parser.add_argument('-v', '--verbose', dest='verbose', action="store_true", help='(Optional) Display verbose logging (default: false)')
+    return parser.parse_args()
 
-dst_session_args = {}
-if args.dst_profile is not None:
-    dst_session_args['profile_name'] = args.dst_profile
-    logger.info(f"Destination: boto3 Session uses {args.dst_profile} profile based on the argument.")
-if args.dst_region is not None:
-    dst_session_args['region_name'] = args.dst_region
-    logger.info(f"Destination: boto3 Session uses {args.dst_region} region based on the argument.")
+def setup_logging(verbose):
+    logger_handler = logging.StreamHandler(sys.stdout)
+    logger.addHandler(logger_handler)
 
-src_session = boto3.Session(**src_session_args)
-src_glue = src_session.client('glue', endpoint_url=args.src_glue_endpoint_url)
-src_s3 = src_session.resource('s3', endpoint_url=args.src_s3_endpoint_url)
+    if verbose:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
 
-if args.sts_role_arn is not None:
-    src_sts = src_session.client('sts', endpoint_url=args.src_sts_endpoint_url)
-    res = src_sts.assume_role(RoleArn=args.sts_role_arn, RoleSessionName='glue-job-sync')
-    dst_session_args['aws_access_key_id'] = res['Credentials']['AccessKeyId']
-    dst_session_args['aws_secret_access_key'] = res['Credentials']['SecretAccessKey']
-    dst_session_args['aws_session_token'] = res['Credentials']['SessionToken']
+    for libname in ["boto3", "botocore", "urllib3", "s3transfer"]:
+        logging.getLogger(libname).setLevel(logging.WARNING)
 
-if args.dst_profile is None and args.sts_role_arn is None:
-    logger.error("You need to set --dst-profile or --sts-role-arn to create resources in the destination account.")
-    sys.exit(1)
+    logger.debug(f"Python version: {sys.version}")
+    logger.debug(f"Version info: {sys.version_info}")
+    logger.debug(f"boto3 version: {boto3.__version__}")
+    logger.debug(f"botocore version: {botocore.__version__}")
 
-dst_session = boto3.Session(**dst_session_args)
-dst_glue = dst_session.client('glue', endpoint_url=args.dst_glue_endpoint_url)
-dst_s3 = dst_session.resource('s3', endpoint_url=args.dst_s3_endpoint_url)
-dst_s3_client = dst_session.client('s3', endpoint_url=args.dst_s3_endpoint_url)
 
-do_update = not args.dryrun
+def initialize():
+    global args, logger, src_session, src_glue, src_s3, dst_session, dst_glue, dst_s3, dst_s3_client, do_update
+    
+    args = parse_arguments()
+    setup_logging(args.verbose)
+
+    src_session_args = {}
+    if args.src_profile is not None:
+        src_session_args['profile_name'] = args.src_profile
+        logger.info(f"Source: boto3 Session uses {args.src_profile} profile based on the argument.")
+    if args.src_region is not None:
+        src_session_args['region_name'] = args.src_region
+        logger.info(f"Source: boto3 Session uses {args.src_region} region based on the argument.")
+
+    src_session = boto3.Session(**src_session_args)
+
+    if args.src_role_arn is not None:
+        src_sts = src_session.client('sts', endpoint_url=args.src_sts_endpoint_url)
+        src_assumed_role = src_sts.assume_role(RoleArn=args.src_role_arn, RoleSessionName='glue-job-sync-source')
+        src_session = boto3.Session(
+            aws_access_key_id=src_assumed_role['Credentials']['AccessKeyId'],
+            aws_secret_access_key=src_assumed_role['Credentials']['SecretAccessKey'],
+            aws_session_token=src_assumed_role['Credentials']['SessionToken'],
+            region_name=args.src_region
+        )
+        logger.info(f"Assumed role in source account: {args.src_role_arn}")
+
+    src_glue = src_session.client('glue', endpoint_url=args.src_glue_endpoint_url)
+    src_s3 = src_session.resource('s3', endpoint_url=args.src_s3_endpoint_url)
+
+    dst_session_args = {}
+    if args.dst_profile is not None:
+        dst_session_args['profile_name'] = args.dst_profile
+        logger.info(f"Destination: boto3 Session uses {args.dst_profile} profile based on the argument.")
+    if args.dst_region is not None:
+        dst_session_args['region_name'] = args.dst_region
+        logger.info(f"Destination: boto3 Session uses {args.dst_region} region based on the argument.")
+
+    dst_session = boto3.Session(**dst_session_args)
+
+    if args.dst_role_arn is not None:
+        dst_sts = dst_session.client('sts', endpoint_url=args.dst_sts_endpoint_url)
+        dst_assumed_role = dst_sts.assume_role(RoleArn=args.dst_role_arn, RoleSessionName='glue-job-sync-destination')
+        dst_session = boto3.Session(
+            aws_access_key_id=dst_assumed_role['Credentials']['AccessKeyId'],
+            aws_secret_access_key=dst_assumed_role['Credentials']['SecretAccessKey'],
+            aws_session_token=dst_assumed_role['Credentials']['SessionToken'],
+            region_name=args.dst_region
+        )
+        logger.info(f"Assumed role in destination account: {args.dst_role_arn}")
+
+    if args.dst_profile is None and args.dst_role_arn is None:
+        logger.error("You need to set --dst-profile or --dst-role-arn to create resources in the destination account.")
+        sys.exit(1)
+
+    dst_glue = dst_session.client('glue', endpoint_url=args.dst_glue_endpoint_url)
+    dst_s3 = dst_session.resource('s3', endpoint_url=args.dst_s3_endpoint_url)
+    dst_s3_client = dst_session.client('s3', endpoint_url=args.dst_s3_endpoint_url)
+
+    do_update = not args.dryrun
 
 
 def prompt(message):
@@ -264,13 +308,8 @@ def copy_job_script(src_s3path, dst_s3path):
 
 
 def synchronize_job(job_name, mapping):
-    """Function to synchronize an AWS Glue job.
+    """Function to synchronize an AWS Glue job."""
 
-    Args:
-        job_name: The name of AWS Glue job which is going to be synchronized.
-        mapping: Mapping configuration to replace the job parameter.
-
-    """
     logger.debug(f"Synchronizing job '{job_name}'")
     # Get DAG per job in the source account
     res = src_glue.get_job(JobName=job_name)
@@ -319,6 +358,7 @@ def synchronize_job(job_name, mapping):
                 dst_glue.update_job(**job_update)
             logger.info(f"The job '{job_name}' has been overwritten.")
     except dst_glue.exceptions.EntityNotFoundException:
+        logger.debug(f"Job '{job_name}' does not exist in the destination account. Creating it.")
         logger.debug(f"Creating job '{job_name}' with configuration: '{json.dumps(job, indent=4, default=str)}'")
         if do_update:
             dst_glue.create_job(**job)
@@ -596,6 +636,8 @@ def synchronize_database(database, mapping):
 
 
 def main():
+    initialize()
+
     if args.config_path:
         logger.debug(f"Loading Mapping config file: {args.config_path}")
         mapping = load_mapping_config_file(args.config_path)
