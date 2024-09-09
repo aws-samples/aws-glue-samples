@@ -44,7 +44,11 @@ parser.add_argument('--dst-sts-endpoint-url', dest='dst_sts_endpoint_url',
 parser.add_argument('--dst-glue-endpoint-url', dest='dst_glue_endpoint_url',
                     type=str, help='Destination endpoint URL for AWS Glue.')
 parser.add_argument('--sts-role-arn', dest='sts_role_arn',
-                    type=str, help='IAM role arn to be assumed to access destination account resources.')
+                    type=str, help='IAM role ARN to be assumed to access destination account resources.')
+parser.add_argument('--src-role-arn', dest='src_role_arn', type=str,
+                    help='IAM role ARN to be assumed to access source account resources.')
+parser.add_argument('--dst-role-arn', dest='dst_role_arn', type=str,
+                    help='IAM role ARN to be assumed to access destination account resources.')
 parser.add_argument('--skip-no-dag-jobs', dest='skip_no_dag_jobs', type=strtobool, default=True,
                     help='Skip Glue jobs which do not have DAG. (possible values: [true, false]. default: true)')
 parser.add_argument('--overwrite-jobs', dest='overwrite_jobs', type=strtobool, default=True,
@@ -78,6 +82,14 @@ logger.debug(f"Version info: {sys.version_info}")
 logger.debug(f"boto3 version: {boto3.__version__}")
 logger.debug(f"botocore version: {botocore.__version__}")
 
+if args.src_profile is None and args.src_role_arn is None:
+    logger.error("You need to set --src-profile or --src-role-arn to access source account.")
+    sys.exit(1)
+
+if args.dst_profile is None and args.dst_role_arn is None and args.sts_role_arn is None:
+    logger.error("You need to set --dst-profile, --dst-role-arn, or --sts-role-arn to create resources in the destination account.")
+    sys.exit(1)
+
 src_session_args = {}
 if args.src_profile is not None:
     src_session_args['profile_name'] = args.src_profile
@@ -85,6 +97,12 @@ if args.src_profile is not None:
 if args.src_region is not None:
     src_session_args['region_name'] = args.src_region
     logger.info(f"Source: boto3 Session uses {args.src_region} region based on the argument.")
+if args.src_role_arn is not None:
+    src_sts = boto3.client('sts', endpoint_url=args.src_sts_endpoint_url)
+    res = src_sts.assume_role(RoleArn=args.src_role_arn, RoleSessionName='glue-job-sync-src')
+    src_session_args['aws_access_key_id'] = res['Credentials']['AccessKeyId']
+    src_session_args['aws_secret_access_key'] = res['Credentials']['SecretAccessKey']
+    src_session_args['aws_session_token'] = res['Credentials']['SessionToken']
 
 dst_session_args = {}
 if args.dst_profile is not None:
@@ -93,21 +111,17 @@ if args.dst_profile is not None:
 if args.dst_region is not None:
     dst_session_args['region_name'] = args.dst_region
     logger.info(f"Destination: boto3 Session uses {args.dst_region} region based on the argument.")
-
-src_session = boto3.Session(**src_session_args)
-src_glue = src_session.client('glue', endpoint_url=args.src_glue_endpoint_url)
-src_s3 = src_session.resource('s3', endpoint_url=args.src_s3_endpoint_url)
-
-if args.sts_role_arn is not None:
-    src_sts = src_session.client('sts', endpoint_url=args.src_sts_endpoint_url)
-    res = src_sts.assume_role(RoleArn=args.sts_role_arn, RoleSessionName='glue-job-sync')
+if args.dst_role_arn is not None or args.sts_role_arn is not None:
+    dst_sts = boto3.client('sts', endpoint_url=args.dst_sts_endpoint_url)
+    role_arn = args.dst_role_arn if args.dst_role_arn is not None else args.sts_role_arn
+    res = dst_sts.assume_role(RoleArn=role_arn, RoleSessionName='glue-job-sync-dst')
     dst_session_args['aws_access_key_id'] = res['Credentials']['AccessKeyId']
     dst_session_args['aws_secret_access_key'] = res['Credentials']['SecretAccessKey']
     dst_session_args['aws_session_token'] = res['Credentials']['SessionToken']
 
-if args.dst_profile is None and args.sts_role_arn is None:
-    logger.error("You need to set --dst-profile or --sts-role-arn to create resources in the destination account.")
-    sys.exit(1)
+src_session = boto3.Session(**src_session_args)
+src_glue = src_session.client('glue', endpoint_url=args.src_glue_endpoint_url)
+src_s3 = src_session.resource('s3', endpoint_url=args.src_s3_endpoint_url)
 
 dst_session = boto3.Session(**dst_session_args)
 dst_glue = dst_session.client('glue', endpoint_url=args.dst_glue_endpoint_url)
