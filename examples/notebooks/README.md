@@ -36,3 +36,6 @@ See details in [Process Apache Hudi, Delta Lake, Apache Iceberg datasets at scal
 ### Apache Iceberg
  - [Iceberg DataFrame example](iceberg_dataframe.ipynb)
  - [Iceberg Spark SQL example](iceberg_sql.ipynb)
+
+## Other Examples
+ - [Building RAG using AWS Glue for Apache Spark](langchain-spark-rag-jumpstart.ipynb)
