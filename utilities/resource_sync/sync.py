@@ -61,6 +61,10 @@ parser.add_argument('--copy-job-script', dest='copy_job_script', type=strtobool,
                     help='Copy Glue job script from the source account to the destination account. (possible values: [true, false]. default: true)')
 parser.add_argument('--config-path', dest='config_path', type=str,
                     help='The config file path to provide parameter mapping. You can set S3 path or local file path.')
+parser.add_argument('--serialize-to-file', dest='serialize_file', type=str,
+                    help='Serialize jobs to a local file instead of deploying.')
+parser.add_argument('--deploy-from-file', dest='deploy_file', type=str,
+                    help='Deploy jobs from a local file instead of source account.')
 parser.add_argument('--skip-errors', dest='skip_errors', action="store_true", help='(Optional) Skip errors and continue execution. (default: false)')
 parser.add_argument('--dryrun', dest='dryrun', action="store_true", help='(Optional) Display the operations that would be performed using the specified command without actually running them (default: false)')
 parser.add_argument('--skip-prompt', dest='skip_prompt', action="store_true", help='(Optional) Skip prompt (default: false)')
@@ -82,13 +86,16 @@ logger.debug(f"Version info: {sys.version_info}")
 logger.debug(f"boto3 version: {boto3.__version__}")
 logger.debug(f"botocore version: {botocore.__version__}")
 
-if args.src_profile is None and args.src_role_arn is None:
-    logger.error("You need to set --src-profile or --src-role-arn to access source account.")
-    sys.exit(1)
 
-if args.dst_profile is None and args.dst_role_arn is None and args.sts_role_arn is None:
-    logger.error("You need to set --dst-profile, --dst-role-arn, or --sts-role-arn to create resources in the destination account.")
-    sys.exit(1)
+if not args.deploy_file:
+    if args.src_profile is None and args.src_role_arn is None:
+        logger.error("You need to set --src-profile or --src-role-arn to access source account.")
+        sys.exit(1)
+
+if not args.serialize_file:
+    if args.dst_profile is None and args.dst_role_arn is None and args.sts_role_arn is None:
+        logger.error("You need to set --dst-profile, --dst-role-arn, or --sts-role-arn to create resources in the destination account.")
+        sys.exit(1)
 
 src_session_args = {}
 if args.src_profile is not None:
@@ -145,6 +152,26 @@ if do_update:
 else:
     logger.info("Running in dry run mode. There are no updates triggered by this execution.")
 
+
+def serialize_job(job):
+    """Serialize a job, including its visual DAG if present."""
+    serialized_job = json.dumps(job, default=str)
+    return serialized_job
+
+def deserialize_job(serialized_job):
+    """Deserialize a job, including its visual DAG if present."""
+    job = json.loads(serialized_job)
+    return job
+
+def save_jobs_to_file(jobs, filename):
+    """Save serialized jobs to a local file."""
+    with open(filename, 'w') as f:
+        json.dump([serialize_job(job) for job in jobs], f)
+
+def load_jobs_from_file(filename):
+    """Load serialized jobs from a local file."""
+    with open(filename, 'r') as f:
+        return [deserialize_job(job) for job in json.load(f)]
 
 def load_mapping_config_file(path):
     """Function to load mapping config (JSON) file from S3 or local.
@@ -609,6 +636,11 @@ def synchronize_database(database, mapping):
             synchronize_table(t, mapping)
 
 
+def apply_mapping_to_jobs(jobs, mapping):
+    """Apply mapping transformations to a list of jobs."""
+    return [organize_job_param(job, mapping) for job in jobs]
+
+
 def main():
     if args.config_path:
         logger.debug(f"Loading Mapping config file: {args.config_path}")
@@ -618,19 +650,72 @@ def main():
         mapping = None
 
     if "job" in args.targets:
-        if args.src_job_names is not None:
-            logger.debug(f"Sync target job: {args.src_job_names}")
-            job_names = args.src_job_names.split(',')
-            for job_name in job_names:
-                synchronize_job(job_name, mapping)
-        else:
+        if args.serialize_file:
+            # Serialize jobs to file
             jobs = []
-            get_jobs_paginator = src_glue.get_paginator('get_jobs')
-            for page in get_jobs_paginator.paginate():
-                jobs.extend(page['Jobs'])
+            if args.src_job_names is not None:
+                job_names = args.src_job_names.split(',')
+                for job_name in job_names:
+                    res = src_glue.get_job(JobName=job_name)
+                    jobs.append(res['Job'])
+            else:
+                get_jobs_paginator = src_glue.get_paginator('get_jobs')
+                for page in get_jobs_paginator.paginate():
+                    jobs.extend(page['Jobs'])
+            
+            save_jobs_to_file(jobs, args.serialize_file)
+            logger.info(f"Jobs serialized to file: {args.serialize_file}")
+            return  # Exit after serialization
 
-            for j in jobs:
-                synchronize_job(j['Name'], mapping)
+        elif args.deploy_file:
+            # Deploy jobs from file
+            if not args.config_path:
+                logger.error("--config-path must be provided when using --deploy-from-file")
+                sys.exit(1)
+            
+            jobs = load_jobs_from_file(args.deploy_file)
+            logger.info("Applying mapping transformations to jobs")
+            jobs = apply_mapping_to_jobs(jobs, mapping)
+            
+            for job in jobs:
+                job_name = job['Name']
+                try:
+                    logger.debug(f"Checking if job '{job_name}' exists in the destination account.")
+                    current_job = dst_glue.get_job(JobName=job_name)
+                    if args.overwrite_jobs:
+                        del job['Name']
+                        job_update = {'JobName': job_name, 'JobUpdate': job}
+                        logger.debug(f"Updating job '{job_name}' with configuration: '{json.dumps(job_update, indent=4, default=str)}'")
+                        if do_update:
+                            dst_glue.update_job(**job_update)
+                        logger.info(f"The job '{job_name}' has been overwritten.")
+                except dst_glue.exceptions.EntityNotFoundException:
+                    logger.debug(f"Creating job '{job_name}' with configuration: '{json.dumps(job, indent=4, default=str)}'")
+                    if do_update:
+                        dst_glue.create_job(**job)
+                    logger.info(f"New job '{job_name}' has been created.")
+                except Exception as e:
+                    logger.error(f"Error occurred in deploying job: '{job_name}'")
+                    if args.skip_errors:
+                        logger.error(f"Skipping error: {e}", exc_info=True)
+                    else:
+                        raise
+
+        else:
+            # Existing synchronization logic
+            if args.src_job_names is not None:
+                logger.debug(f"Sync target job: {args.src_job_names}")
+                job_names = args.src_job_names.split(',')
+                for job_name in job_names:
+                    synchronize_job(job_name, mapping)
+            else:
+                jobs = []
+                get_jobs_paginator = src_glue.get_paginator('get_jobs')
+                for page in get_jobs_paginator.paginate():
+                    jobs.extend(page['Jobs'])
+
+                for j in jobs:
+                    synchronize_job(j['Name'], mapping)
 
     if "catalog" in args.targets:
         if args.src_database_names is not None:
