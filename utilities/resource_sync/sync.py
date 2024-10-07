@@ -62,9 +62,9 @@ parser.add_argument('--copy-job-script', dest='copy_job_script', type=strtobool,
 parser.add_argument('--config-path', dest='config_path', type=str,
                     help='The config file path to provide parameter mapping. You can set S3 path or local file path.')
 parser.add_argument('--serialize-to-file', dest='serialize_file', type=str,
-                    help='Serialize jobs to a local file instead of deploying.')
+                    help='Serialize jobs and/or tables to a local file instead of deploying.')
 parser.add_argument('--deploy-from-file', dest='deploy_file', type=str,
-                    help='Deploy jobs from a local file instead of source account.')
+                    help='Deploy jobs and/or tables from a local file instead of source account.')
 parser.add_argument('--skip-errors', dest='skip_errors', action="store_true", help='(Optional) Skip errors and continue execution. (default: false)')
 parser.add_argument('--dryrun', dest='dryrun', action="store_true", help='(Optional) Display the operations that would be performed using the specified command without actually running them (default: false)')
 parser.add_argument('--skip-prompt', dest='skip_prompt', action="store_true", help='(Optional) Skip prompt (default: false)')
@@ -153,25 +153,23 @@ else:
     logger.info("Running in dry run mode. There are no updates triggered by this execution.")
 
 
-def serialize_job(job):
-    """Serialize a job, including its visual DAG if present."""
-    serialized_job = json.dumps(job, default=str)
-    return serialized_job
+def serialize_resource(resource):
+    """Serialize a resource (job or table)."""
+    return json.dumps(resource, default=str)
 
-def deserialize_job(serialized_job):
-    """Deserialize a job, including its visual DAG if present."""
-    job = json.loads(serialized_job)
-    return job
+def deserialize_resource(serialized_resource):
+    """Deserialize a resource (job or table)."""
+    return json.loads(serialized_resource)
 
-def save_jobs_to_file(jobs, filename):
-    """Save serialized jobs to a local file."""
+def save_resources_to_file(resources, filename):
+    """Save serialized resources to a local file."""
     with open(filename, 'w') as f:
-        json.dump([serialize_job(job) for job in jobs], f)
+        json.dump([serialize_resource(resource) for resource in resources], f)
 
-def load_jobs_from_file(filename):
-    """Load serialized jobs from a local file."""
+def load_resources_from_file(filename):
+    """Load serialized resources from a local file."""
     with open(filename, 'r') as f:
-        return [deserialize_job(job) for job in json.load(f)]
+        return [deserialize_resource(resource) for resource in json.load(f)]
 
 def load_mapping_config_file(path):
     """Function to load mapping config (JSON) file from S3 or local.
@@ -636,11 +634,6 @@ def synchronize_database(database, mapping):
             synchronize_table(t, mapping)
 
 
-def apply_mapping_to_jobs(jobs, mapping):
-    """Apply mapping transformations to a list of jobs."""
-    return [organize_job_param(job, mapping) for job in jobs]
-
-
 def main():
     if args.config_path:
         logger.debug(f"Loading Mapping config file: {args.config_path}")
@@ -649,9 +642,10 @@ def main():
         logger.debug(f"Mapping config file is not given.")
         mapping = None
 
+    resources_to_serialize = []
+
     if "job" in args.targets:
-        if args.serialize_file:
-            # Serialize jobs to file
+        if args.serialize_file or args.deploy_file:
             jobs = []
             if args.src_job_names is not None:
                 job_names = args.src_job_names.split(',')
@@ -663,21 +657,48 @@ def main():
                 for page in get_jobs_paginator.paginate():
                     jobs.extend(page['Jobs'])
             
-            save_jobs_to_file(jobs, args.serialize_file)
-            logger.info(f"Jobs serialized to file: {args.serialize_file}")
-            return  # Exit after serialization
+            resources_to_serialize.extend([{'type': 'job', 'data': job} for job in jobs])
 
-        elif args.deploy_file:
-            # Deploy jobs from file
-            if not args.config_path:
-                logger.error("--config-path must be provided when using --deploy-from-file")
-                sys.exit(1)
+    if "catalog" in args.targets:
+        if args.serialize_file or args.deploy_file:
+            tables = []
+            if args.src_database_names is not None:
+                database_names = args.src_database_names.split(',')
+                for database_name in database_names:
+                    if args.src_table_names is not None:
+                        table_names = args.src_table_names.split(',')
+                        for table_name in table_names:
+                            table = src_glue.get_table(DatabaseName=database_name, Name=table_name)
+                            tables.append(table['Table'])
+                    else:
+                        get_tables_paginator = src_glue.get_paginator('get_tables')
+                        for page in get_tables_paginator.paginate(DatabaseName=database_name):
+                            tables.extend(page['TableList'])
+            else:
+                get_databases_paginator = src_glue.get_paginator('get_databases')
+                for page in get_databases_paginator.paginate():
+                    for database in page['DatabaseList']:
+                        get_tables_paginator = src_glue.get_paginator('get_tables')
+                        for page in get_tables_paginator.paginate(DatabaseName=database['Name']):
+                            tables.extend(page['TableList'])
             
-            jobs = load_jobs_from_file(args.deploy_file)
-            logger.info("Applying mapping transformations to jobs")
-            jobs = apply_mapping_to_jobs(jobs, mapping)
-            
-            for job in jobs:
+            resources_to_serialize.extend([{'type': 'table', 'data': table} for table in tables])
+
+    if args.serialize_file:
+        save_resources_to_file(resources_to_serialize, args.serialize_file)
+        logger.info(f"Resources serialized to file: {args.serialize_file}")
+        return  # Exit after serialization
+
+    if args.deploy_file:
+        if not args.config_path:
+            logger.error("--config-path must be provided when using --deploy-from-file")
+            sys.exit(1)
+        
+        resources = load_resources_from_file(args.deploy_file)
+        
+        for resource in resources:
+            if resource['type'] == 'job':
+                job = organize_job_param(resource['data'], mapping)
                 job_name = job['Name']
                 try:
                     logger.debug(f"Checking if job '{job_name}' exists in the destination account.")
@@ -700,9 +721,33 @@ def main():
                         logger.error(f"Skipping error: {e}", exc_info=True)
                     else:
                         raise
+            elif resource['type'] == 'table':
+                table = organize_table_param({'TableInput': resource['data']}, mapping)
+                database_name = table['DatabaseName']
+                table_name = table['TableInput']['Name']
+                try:
+                    logger.debug(f"Checking if table '{database_name}'.'{table_name}' exists in the destination account.")
+                    current_table = dst_glue.get_table(DatabaseName=database_name, Name=table_name)
+                    if args.overwrite_tables:
+                        logger.debug(f"Updating table '{database_name}'.'{table_name}' with configuration: '{table}'")
+                        if do_update:
+                            dst_glue.update_table(**table)
+                        logger.info(f"The table '{database_name}'.'{table_name}' has been overwritten.")
+                except dst_glue.exceptions.EntityNotFoundException:
+                    logger.debug(f"Creating table '{database_name}'.'{table_name}' with configuration: '{table}'")
+                    if do_update:
+                        dst_glue.create_table(**table)
+                    logger.info(f"New table '{database_name}'.'{table_name}' has been created.")
+                except Exception as e:
+                    logger.error(f"Error occurred in deploying table: '{database_name}'.'{table_name}'")
+                    if args.skip_errors:
+                        logger.error(f"Skipping error: {e}", exc_info=True)
+                    else:
+                        raise
 
-        else:
-            # Existing synchronization logic
+    else:
+        # Existing synchronization logic for jobs and tables
+        if "job" in args.targets:
             if args.src_job_names is not None:
                 logger.debug(f"Sync target job: {args.src_job_names}")
                 job_names = args.src_job_names.split(',')
@@ -717,21 +762,21 @@ def main():
                 for j in jobs:
                     synchronize_job(j['Name'], mapping)
 
-    if "catalog" in args.targets:
-        if args.src_database_names is not None:
-            logger.debug(f"Sync target database: {args.src_database_names}")
-            database_names = args.src_database_names.split(',')
-            for database_name in database_names:
-                database = src_glue.get_database(Name=database_name)
-                synchronize_database(database['Database'], mapping)
-        else:
-            databases = []
-            get_databases_paginator = src_glue.get_paginator('get_databases')
-            for page in get_databases_paginator.paginate():
-                databases.extend(page['DatabaseList'])
+        if "catalog" in args.targets:
+            if args.src_database_names is not None:
+                logger.debug(f"Sync target database: {args.src_database_names}")
+                database_names = args.src_database_names.split(',')
+                for database_name in database_names:
+                    database = src_glue.get_database(Name=database_name)
+                    synchronize_database(database['Database'], mapping)
+            else:
+                databases = []
+                get_databases_paginator = src_glue.get_paginator('get_databases')
+                for page in get_databases_paginator.paginate():
+                    databases.extend(page['DatabaseList'])
 
-            for d in databases:
-                synchronize_database(d, mapping)
+                for d in databases:
+                    synchronize_database(d, mapping)
 
 
 if __name__ == "__main__":
