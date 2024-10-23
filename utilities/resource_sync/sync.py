@@ -69,6 +69,7 @@ parser.add_argument('--skip-errors', dest='skip_errors', action="store_true", he
 parser.add_argument('--dryrun', dest='dryrun', action="store_true", help='(Optional) Display the operations that would be performed using the specified command without actually running them (default: false)')
 parser.add_argument('--skip-prompt', dest='skip_prompt', action="store_true", help='(Optional) Skip prompt (default: false)')
 parser.add_argument('-v', '--verbose', dest='verbose', action="store_true", help='(Optional) Display verbose logging (default: false)')
+
 args, unknown = parser.parse_known_args()
 
 logger = logging.getLogger()
@@ -147,9 +148,9 @@ resources = {}
 
 def prompt(message):
     answer = input(message)
-    if answer.lower() in ["n","no"]:
+    if answer.lower() in ["n", "no"]:
         sys.exit(0)
-    elif answer.lower() not in ["y","yes"]:
+    elif answer.lower() not in ["y", "yes"]:
         prompt(message)
 
 
@@ -291,27 +292,39 @@ def copy_job_script(src_s3path, dst_s3path):
             f"{tmpdir}/{src_basename}", dst_bucket, dst_key)
 
 
-def synchronize_job(job_name, mapping, job=None):
-    global resources
-    logger.debug(f"Synchronizing job '{job_name}'")
-
-    if job is None:
-        if args.deserialize_file:
-            # Get job definition from resources
-            job_definitions = {job['Name']: job for job in resources.get('jobs', [])}
-            job = job_definitions.get(job_name)
-            if not job:
-                logger.error(f"Job '{job_name}' not found in deserialized data.")
-                return
+def get_job_names():
+    if args.deserialize_file:
+        return [job['Name'] for job in resources.get('jobs', [])]
+    else:
+        if args.src_job_names:
+            return args.src_job_names.split(',')
         else:
-            # Get job from source account
-            res = src_glue.get_job(JobName=job_name)
-            job = res['Job']
-            logger.debug(f"GetJob API response: {json.dumps(job, indent=4, default=str)}")
+            job_names = []
+            get_job_names_paginator = src_glue.get_paginator('list_jobs')
+            for page in get_job_names_paginator.paginate():
+                job_names.extend(page['JobNames'])
+            return job_names
+
+
+def get_job_definition(job_name):
+    if args.deserialize_file:
+        job_definitions = {job['Name']: job for job in resources.get('jobs', [])}
+        job = job_definitions.get(job_name)
+        if not job:
+            logger.error(f"Job '{job_name}' not found in deserialized data.")
+        return job
+    else:
+        res = src_glue.get_job(JobName=job_name)
+        job = res['Job']
+        return job
+
+
+def synchronize_job(job_name, mapping, job):
+    logger.debug(f"Synchronizing job '{job_name}'")
 
     # Skip jobs which do not have DAG
     if args.skip_no_dag_jobs and 'CodeGenConfigurationNodes' not in job:
-        logger.debug(f"Skipping job '{job_name}' because it does not have DAG.")
+        logger.debug(f"Skipping job '{job_name}' because the parameter '--skip-no-dag-jobs' is true and this job does not have DAG.")
         return
 
     # Store source job script path
@@ -512,8 +525,18 @@ def synchronize_partitions(database_name, table_name, partitions, mapping):
     logger.info(f"The {len(partitions)} partitions in the table '{database_name}'.'{table_name}' have been created or updated.")
 
 
+def get_partitions(database_name, table_name):
+    if args.deserialize_file:
+        return [p for p in resources.get('partitions', []) if p['DatabaseName'] == database_name and p['TableName'] == table_name]
+    else:
+        partitions = []
+        get_partitions_paginator = src_glue.get_paginator('get_partitions')
+        for page in get_partitions_paginator.paginate(DatabaseName=database_name, TableName=table_name):
+            partitions.extend(page['Partitions'])
+        return partitions
+
+
 def synchronize_table(table, mapping):
-    global resources
     database_name = table['DatabaseName']
     table_name = table['Name']
     logger.debug(f"Synchronizing table '{database_name}'.'{table_name}'")
@@ -553,35 +576,69 @@ def synchronize_table(table, mapping):
         else:
             raise
 
-    # Iterate partitions under the table
-    partitions = []
-    if args.deserialize_file:
-        partitions = [p for p in resources.get('partitions', []) if p['DatabaseName'] == database_name and p['TableName'] == table_name]
-    else:
-        get_partitions_paginator = src_glue.get_paginator('get_partitions')
-        for page in get_partitions_paginator.paginate(DatabaseName=database_name, TableName=table_name):
-            partitions.extend(page['Partitions'])
-
+    # Synchronize partitions
+    partitions = get_partitions(database_name, table_name)
     n = 100
     for i in range(0, len(partitions), n):
         synchronize_partitions(database_name, table_name, partitions[i: i+n], mapping)
 
 
-def synchronize_database(database_name, mapping, database=None):
-    global resources
-    logger.debug(f"Synchronizing database '{database_name}'")
-
-    if database is None:
-        if args.deserialize_file:
-            # Get database definition from resources
-            database_definitions = {db['Name']: db for db in resources.get('databases', [])}
-            database = database_definitions.get(database_name)
-            if not database:
-                logger.error(f"Database '{database_name}' not found in deserialized data.")
-                return
+def get_database_names():
+    if args.deserialize_file:
+        return [db['Name'] for db in resources.get('databases', [])]
+    else:
+        if args.src_database_names:
+            return args.src_database_names.split(',')
         else:
-            res = src_glue.get_database(Name=database_name)
-            database = res['Database']
+            database_names = []
+            get_databases_paginator = src_glue.get_paginator('get_databases')
+            for page in get_databases_paginator.paginate():
+                database_names.extend([db['Name'] for db in page['DatabaseList']])
+            return database_names
+
+
+def get_database_definition(database_name):
+    if args.deserialize_file:
+        database_definitions = {db['Name']: db for db in resources.get('databases', [])}
+        database = database_definitions.get(database_name)
+        if not database:
+            logger.error(f"Database '{database_name}' not found in deserialized data.")
+        return database
+    else:
+        res = src_glue.get_database(Name=database_name)
+        database = res['Database']
+        return database
+
+
+def get_table_names(database_name):
+    if args.deserialize_file:
+        return [table['Name'] for table in resources.get('tables', []) if table['DatabaseName'] == database_name]
+    else:
+        if args.src_table_names:
+            return args.src_table_names.split(',')
+        else:
+            table_names = []
+            get_tables_paginator = src_glue.get_paginator('get_tables')
+            for page in get_tables_paginator.paginate(DatabaseName=database_name):
+                table_names.extend([table['Name'] for table in page['TableList']])
+            return table_names
+
+
+def get_table_definition(database_name, table_name):
+    if args.deserialize_file:
+        table_definitions = {(table['DatabaseName'], table['Name']): table for table in resources.get('tables', [])}
+        table = table_definitions.get((database_name, table_name))
+        if not table:
+            logger.error(f"Table '{database_name}'.'{table_name}' not found in deserialized data.")
+        return table
+    else:
+        res = src_glue.get_table(DatabaseName=database_name, Name=table_name)
+        table = res['Table']
+        return table
+
+
+def synchronize_database(database_name, mapping, database):
+    logger.debug(f"Synchronizing database '{database_name}'")
 
     if 'TargetDatabase' in database:
         logger.warning(f"Database '{database_name}' is skipped since it is a resource link.")
@@ -616,25 +673,12 @@ def synchronize_database(database_name, mapping, database=None):
         else:
             raise
 
-    # Iterate tables under the database
-    if args.deserialize_file:
-        tables = [t for t in resources.get('tables', []) if t['DatabaseName'] == database_name]
-        for table in tables:
+    # Proceed to synchronize tables
+    table_names = get_table_names(database_name)
+    for table_name in table_names:
+        table = get_table_definition(database_name, table_name)
+        if table:
             synchronize_table(table, mapping)
-    else:
-        if args.src_table_names:
-            logger.debug(f"Sync target table: {args.src_table_names}")
-            table_names = args.src_table_names.split(',')
-            for table_name in table_names:
-                res = src_glue.get_table(DatabaseName=database_name, Name=table_name)
-                synchronize_table(res['Table'], mapping)
-        else:
-            tables = []
-            get_tables_paginator = src_glue.get_paginator('get_tables')
-            for page in get_tables_paginator.paginate(DatabaseName=database_name):
-                tables.extend(page['TableList'])
-            for t in tables:
-                synchronize_table(t, mapping)
 
 
 def main():
@@ -656,65 +700,32 @@ def main():
 
         # Serialize jobs
         if "job" in args.targets:
+            job_names = get_job_names()
             jobs = []
-            if args.src_job_names:
-                logger.debug(f"Sync target job: {args.src_job_names}")
-                job_names = args.src_job_names.split(',')
-                for job_name in job_names:
-                    res = src_glue.get_job(JobName=job_name)
-                    jobs.append(res['Job'])
-            else:
-                get_job_names_paginator = src_glue.get_paginator('list_jobs')
-                for page in get_job_names_paginator.paginate():
-                    job_names = page['JobNames']
-                    for job_name in job_names:
-                        res = src_glue.get_job(JobName=job_name)
-                        jobs.append(res['Job'])
+            for job_name in job_names:
+                job = get_job_definition(job_name)
+                if job:
+                    jobs.append(job)
             resources['jobs'] = jobs
 
         # Serialize Glue Catalog resources
         if "catalog" in args.targets:
+            database_names = get_database_names()
             databases = []
-            if args.src_database_names:
-                logger.debug(f"Sync target database: {args.src_database_names}")
-                database_names = args.src_database_names.split(',')
-                for database_name in database_names:
-                    res = src_glue.get_database(Name=database_name)
-                    databases.append(res['Database'])
-            else:
-                get_databases_paginator = src_glue.get_paginator('get_databases')
-                for page in get_databases_paginator.paginate():
-                    databases.extend(page['DatabaseList'])
-            resources['databases'] = databases
-
-            # Serialize tables and partitions
             tables = []
             partitions = []
-            for database in databases:
-                database_name = database['Name']
-                if args.src_table_names:
-                    logger.debug(f"Sync target table: {args.src_table_names}")
-                    table_names = args.src_table_names.split(',')
+            for database_name in database_names:
+                database = get_database_definition(database_name)
+                if database:
+                    databases.append(database)
+                    table_names = get_table_names(database_name)
                     for table_name in table_names:
-                        res = src_glue.get_table(DatabaseName=database_name, Name=table_name)
-                        table = res['Table']
-                        tables.append(table)
-
-                        # Get partitions for the table
-                        get_partitions_paginator = src_glue.get_paginator('get_partitions')
-                        for page in get_partitions_paginator.paginate(DatabaseName=database_name, TableName=table_name):
-                            partitions.extend(page['Partitions'])
-                else:
-                    get_tables_paginator = src_glue.get_paginator('get_tables')
-                    for page in get_tables_paginator.paginate(DatabaseName=database_name):
-                        tables.extend(page['TableList'])
-
-                        # Get partitions for each table
-                        for table in page['TableList']:
-                            table_name = table['Name']
-                            get_partitions_paginator = src_glue.get_paginator('get_partitions')
-                            for page_partitions in get_partitions_paginator.paginate(DatabaseName=database_name, TableName=table_name):
-                                partitions.extend(page_partitions['Partitions'])
+                        table = get_table_definition(database_name, table_name)
+                        if table:
+                            tables.append(table)
+                            partition_list = get_partitions(database_name, table_name)
+                            partitions.extend(partition_list)
+            resources['databases'] = databases
             resources['tables'] = tables
             resources['partitions'] = partitions
 
@@ -733,42 +744,18 @@ def main():
 
     # Proceed with synchronization
     if "job" in args.targets:
-        if args.deserialize_file:
-            for job in resources.get('jobs', []):
-                job_name = job['Name']
-                synchronize_job(job_name, mapping, job=job)
-        else:
-            if args.src_job_names:
-                logger.debug(f"Sync target job: {args.src_job_names}")
-                job_names = args.src_job_names.split(',')
-                for job_name in job_names:
-                    synchronize_job(job_name, mapping)
-            else:
-                jobs = []
-                get_jobs_paginator = src_glue.get_paginator('get_jobs')
-                for page in get_jobs_paginator.paginate():
-                    jobs.extend(page['Jobs'])
-                for j in jobs:
-                    synchronize_job(j['Name'], mapping)
+        job_names = get_job_names()
+        for job_name in job_names:
+            job = get_job_definition(job_name)
+            if job:
+                synchronize_job(job_name, mapping, job)
 
     if "catalog" in args.targets:
-        if args.deserialize_file:
-            for database in resources.get('databases', []):
-                database_name = database['Name']
-                synchronize_database(database_name, mapping, database=database)
-        else:
-            if args.src_database_names:
-                logger.debug(f"Sync target database: {args.src_database_names}")
-                database_names = args.src_database_names.split(',')
-                for database_name in database_names:
-                    synchronize_database(database_name, mapping)
-            else:
-                databases = []
-                get_databases_paginator = src_glue.get_paginator('get_databases')
-                for page in get_databases_paginator.paginate():
-                    databases.extend(page['DatabaseList'])
-                for d in databases:
-                    synchronize_database(d['Name'], mapping)
+        database_names = get_database_names()
+        for database_name in database_names:
+            database = get_database_definition(database_name)
+            if database:
+                synchronize_database(database_name, mapping, database)
 
 
 if __name__ == "__main__":
