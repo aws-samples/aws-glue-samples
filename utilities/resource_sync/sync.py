@@ -61,6 +61,10 @@ parser.add_argument('--copy-job-script', dest='copy_job_script', type=strtobool,
                     help='Copy Glue job script from the source account to the destination account. (possible values: [true, false]. default: true)')
 parser.add_argument('--config-path', dest='config_path', type=str,
                     help='The config file path to provide parameter mapping. You can set S3 path or local file path.')
+parser.add_argument('--serialize-to-file', dest='serialize_file', type=str,
+                    help='Serialize jobs and/or tables to a local file instead of deploying.')
+parser.add_argument('--deploy-from-file', dest='deploy_file', type=str,
+                    help='Deploy jobs and/or tables from a local file instead of source account.')
 parser.add_argument('--skip-errors', dest='skip_errors', action="store_true", help='(Optional) Skip errors and continue execution. (default: false)')
 parser.add_argument('--dryrun', dest='dryrun', action="store_true", help='(Optional) Display the operations that would be performed using the specified command without actually running them (default: false)')
 parser.add_argument('--skip-prompt', dest='skip_prompt', action="store_true", help='(Optional) Skip prompt (default: false)')
@@ -82,13 +86,16 @@ logger.debug(f"Version info: {sys.version_info}")
 logger.debug(f"boto3 version: {boto3.__version__}")
 logger.debug(f"botocore version: {botocore.__version__}")
 
-if args.src_profile is None and args.src_role_arn is None:
-    logger.error("You need to set --src-profile or --src-role-arn to access source account.")
-    sys.exit(1)
 
-if args.dst_profile is None and args.dst_role_arn is None and args.sts_role_arn is None:
-    logger.error("You need to set --dst-profile, --dst-role-arn, or --sts-role-arn to create resources in the destination account.")
-    sys.exit(1)
+if not args.deploy_file:
+    if args.src_profile is None and args.src_role_arn is None:
+        logger.error("You need to set --src-profile or --src-role-arn to access source account.")
+        sys.exit(1)
+
+if not args.serialize_file:
+    if args.dst_profile is None and args.dst_role_arn is None and args.sts_role_arn is None:
+        logger.error("You need to set --dst-profile, --dst-role-arn, or --sts-role-arn to create resources in the destination account.")
+        sys.exit(1)
 
 src_session_args = {}
 if args.src_profile is not None:
@@ -145,6 +152,24 @@ if do_update:
 else:
     logger.info("Running in dry run mode. There are no updates triggered by this execution.")
 
+
+def serialize_resource(resource):
+    """Serialize a resource (job or table)."""
+    return json.dumps(resource, default=str)
+
+def deserialize_resource(serialized_resource):
+    """Deserialize a resource (job or table)."""
+    return json.loads(serialized_resource)
+
+def save_resources_to_file(resources, filename):
+    """Save serialized resources to a local file."""
+    with open(filename, 'w') as f:
+        json.dump([serialize_resource(resource) for resource in resources], f)
+
+def load_resources_from_file(filename):
+    """Load serialized resources from a local file."""
+    with open(filename, 'r') as f:
+        return [deserialize_resource(resource) for resource in json.load(f)]
 
 def load_mapping_config_file(path):
     """Function to load mapping config (JSON) file from S3 or local.
@@ -276,73 +301,6 @@ def copy_job_script(src_s3path, dst_s3path):
         dst_s3.meta.client.upload_file(
             f"{tmpdir}/{src_basename}", dst_bucket, dst_key)
 
-
-def synchronize_job(job_name, mapping):
-    """Function to synchronize an AWS Glue job.
-
-    Args:
-        job_name: The name of AWS Glue job which is going to be synchronized.
-        mapping: Mapping configuration to replace the job parameter.
-
-    """
-    logger.debug(f"Synchronizing job '{job_name}'")
-    # Get DAG per job in the source account
-    res = src_glue.get_job(JobName=job_name)
-    job = res['Job']
-    logger.debug(f"GetJob API response: {json.dumps(job, indent=4, default=str)}")
-
-    # Skip jobs which do not have DAG
-    if args.skip_no_dag_jobs and 'CodeGenConfigurationNodes' not in job:
-        logger.debug(f"Skipping job '{job_name}' because the parameter '--skip-no-dag-jobs' is true and this job does not have DAG.")
-        return
-
-    # Store source job script path
-    src_job_script_s3_url = job['Command']['ScriptLocation']
-
-    # Organize job parameters
-    job = organize_job_param(job, mapping)
-
-    # Store destination job script path
-    dst_job_script_s3_url = job['Command']['ScriptLocation']
-
-    # Copy job script
-    if args.copy_job_script:
-        logger.debug(f"Copying job script for job '{job_name}' because the parameter 'copy-job-script' is true.")
-        try:
-            if do_update:
-                copy_job_script(src_job_script_s3_url, dst_job_script_s3_url)
-        except Exception as e:
-            logger.error(f"Error occurred in copying job script: '{job_name}'")
-            if args.skip_errors:
-                logger.error(f"Skipping error: {e}", exc_info=True)
-            else:
-                raise
-
-    # Copy job configuration
-    try:
-        logger.debug(f"Checking if job '{job_name}' exists in the destination account.")
-        current_job = dst_glue.get_job(JobName=job_name)
-        logger.debug(f"Current job '{job_name}' configuration: {current_job}")
-        if args.overwrite_jobs:
-            del job['Name']
-            job_update = {}
-            job_update['JobName'] = job_name
-            job_update['JobUpdate'] = job
-            logger.debug(f"Updating job '{job_name}' with configuration: '{json.dumps(job_update, indent=4, default=str)}'")
-            if do_update:
-                dst_glue.update_job(**job_update)
-            logger.info(f"The job '{job_name}' has been overwritten.")
-    except dst_glue.exceptions.EntityNotFoundException:
-        logger.debug(f"Creating job '{job_name}' with configuration: '{json.dumps(job, indent=4, default=str)}'")
-        if do_update:
-            dst_glue.create_job(**job)
-        logger.info(f"New job '{job_name}' has been created.")
-    except Exception as e:
-        logger.error(f"Error occurred in copying job: '{job_name}'")
-        if args.skip_errors:
-            logger.error(f"Skipping error: {e}", exc_info=True)
-        else:
-            raise
 
 def organize_partition_param(database_name, table_name, partition_argument, mapping):
     """Function to organize a partition argument parameters to prepare for batch_create_partition API.
@@ -550,65 +508,55 @@ def synchronize_table(table, mapping):
         synchronize_partitions(database_name, table_name, partitions[i: i+n], mapping)
 
 
-def synchronize_database(database, mapping):
-    """Function to synchronize an AWS Glue database.
-
-    Args:
-        database: The params of AWS Glue database which is going to be synchronized.
-        mapping: Mapping configuration to replace the parameter.
-
-    """
-    database_name = database['Name']
-    logger.debug(f"Synchronizing database '{database_name}'")
-
-    if 'TargetDatabase' in database:
-        logger.warning(f"Database '{database_name}' is skipped since it is a resource link.")
-        return
-
-    # Organize database parameters
-    database_argument = {}
-    database_argument['DatabaseInput'] = database
-    database_argument = organize_database_param(database_argument, mapping)
-
-    # Copy database configuration
+def process_job(job, mapping):
+    job = organize_job_param(job, mapping)
+    job_name = job['Name']
     try:
-        logger.debug(f"Checking if database '{database_name}' exists in the destination account.")
-        current_database = dst_glue.get_database(Name=database_name)
-        logger.debug(f"Current database '{database_name}' configuration: {current_database}")
-        if args.overwrite_databases:
-            database_argument['Name'] = database_name
-            logger.debug(f"Updating database '{database_name}' with configuration: '{database_argument}'")
+        logger.debug(f"Checking if job '{job_name}' exists in the destination account.")
+        dst_glue.get_job(JobName=job_name)
+        if args.overwrite_jobs:
+            del job['Name']
+            job_update = {'JobName': job_name, 'JobUpdate': job}
+            logger.debug(f"Updating job '{job_name}' with configuration: '{json.dumps(job_update, indent=4, default=str)}'")
             if do_update:
-                dst_glue.update_database(**database_argument)
-            logger.info(f"The database '{database_name}' has been overwritten.")
+                dst_glue.update_job(**job_update)
+            logger.info(f"The job '{job_name}' has been overwritten.")
     except dst_glue.exceptions.EntityNotFoundException:
-        logger.debug(f"Creating database '{database_name}' with configuration: '{database_argument}'")
-        database_argument['DatabaseInput']['Name'] = database_name
+        logger.debug(f"Creating job '{job_name}' with configuration: '{json.dumps(job, indent=4, default=str)}'")
         if do_update:
-            dst_glue.create_database(**database_argument)
-        logger.info(f"New database '{database_name}' has been created.")
+            dst_glue.create_job(**job)
+        logger.info(f"New job '{job_name}' has been created.")
     except Exception as e:
-        logger.error(f"Error occurred in copying database: '{database_name}'")
+        logger.error(f"Error occurred in deploying job: '{job_name}'")
         if args.skip_errors:
             logger.error(f"Skipping error: {e}", exc_info=True)
         else:
             raise
 
-    # Iterate tables under the database
-    if args.src_table_names is not None:
-        logger.debug(f"Sync target table: {args.src_table_names}")
-        table_names = args.src_table_names.split(',')
-        for table_name in table_names:
-            table = src_glue.get_table(DatabaseName=database_name, Name=table_name)
-            synchronize_table(table['Table'], mapping)
-    else:
-        tables = []
-        get_tables_paginator = src_glue.get_paginator('get_tables')
-        for page in get_tables_paginator.paginate(DatabaseName=database_name):
-            tables.extend(page['TableList'])
 
-        for t in tables:
-            synchronize_table(t, mapping)
+def process_table(table, mapping):
+    table = organize_table_param({'TableInput': table}, mapping)
+    database_name = table['DatabaseName']
+    table_name = table['TableInput']['Name']
+    try:
+        logger.debug(f"Checking if table '{database_name}'.'{table_name}' exists in the destination account.")
+        dst_glue.get_table(DatabaseName=database_name, Name=table_name)
+        if args.overwrite_tables:
+            logger.debug(f"Updating table '{database_name}'.'{table_name}' with configuration: '{table}'")
+            if do_update:
+                dst_glue.update_table(**table)
+            logger.info(f"The table '{database_name}'.'{table_name}' has been overwritten.")
+    except dst_glue.exceptions.EntityNotFoundException:
+        logger.debug(f"Creating table '{database_name}'.'{table_name}' with configuration: '{table}'")
+        if do_update:
+            dst_glue.create_table(**table)
+        logger.info(f"New table '{database_name}'.'{table_name}' has been created.")
+    except Exception as e:
+        logger.error(f"Error occurred in deploying table: '{database_name}'.'{table_name}'")
+        if args.skip_errors:
+            logger.error(f"Skipping error: {e}", exc_info=True)
+        else:
+            raise
 
 
 def main():
@@ -619,36 +567,77 @@ def main():
         logger.debug(f"Mapping config file is not given.")
         mapping = None
 
-    if "job" in args.targets:
-        if args.src_job_names is not None:
-            logger.debug(f"Sync target job: {args.src_job_names}")
-            job_names = args.src_job_names.split(',')
-            for job_name in job_names:
-                synchronize_job(job_name, mapping)
-        else:
-            jobs = []
-            get_jobs_paginator = src_glue.get_paginator('get_jobs')
-            for page in get_jobs_paginator.paginate():
-                jobs.extend(page['Jobs'])
+    resources_to_process = []
 
-            for j in jobs:
-                synchronize_job(j['Name'], mapping)
+    if args.deploy_file:
+        if not args.config_path:
+            logger.error("--config-path must be provided when using --deploy-from-file")
+            sys.exit(1)
+        resources_to_process = load_resources_from_file(args.deploy_file)
+    else:
 
-    if "catalog" in args.targets:
-        if args.src_database_names is not None:
-            logger.debug(f"Sync target database: {args.src_database_names}")
-            database_names = args.src_database_names.split(',')
-            for database_name in database_names:
-                database = src_glue.get_database(Name=database_name)
-                synchronize_database(database['Database'], mapping)
-        else:
-            databases = []
-            get_databases_paginator = src_glue.get_paginator('get_databases')
-            for page in get_databases_paginator.paginate():
-                databases.extend(page['DatabaseList'])
+        def collect_resources(resource_type, get_resources_func, filter_func=None):
+            resources = get_resources_func()
+            if filter_func:
+                resources = filter_func(resources)
+            return [{'type': resource_type, 'data': resource} for resource in resources]
 
-            for d in databases:
-                synchronize_database(d, mapping)
+        if "job" in args.targets:
+            def get_jobs():
+                if args.src_job_names:
+                    return [src_glue.get_job(JobName=name)['Job'] for name in args.src_job_names.split(',')]
+                else:
+                    jobs = []
+                    get_jobs_paginator = src_glue.get_paginator('get_jobs')
+                    for page in get_jobs_paginator.paginate():
+                        jobs.extend(page['Jobs'])
+                    return jobs
+
+            resources_to_process.extend(collect_resources('job', get_jobs))
+
+        if "catalog" in args.targets:
+            def get_tables():
+                tables = []
+                if args.src_database_names:
+                    database_names = args.src_database_names.split(',')
+                    for database_name in database_names:
+                        if args.src_table_names:
+                            table_names = args.src_table_names.split(',')
+                            tables.extend([src_glue.get_table(DatabaseName=database_name, Name=table_name)['Table'] for table_name in table_names])
+                        else:
+                            get_tables_paginator = src_glue.get_paginator('get_tables')
+                            for page in get_tables_paginator.paginate(DatabaseName=database_name):
+                                tables.extend(page['TableList'])
+                else:
+                    get_databases_paginator = src_glue.get_paginator('get_databases')
+                    for page in get_databases_paginator.paginate():
+                        for database in page['DatabaseList']:
+                            get_tables_paginator = src_glue.get_paginator('get_tables')
+                            for page in get_tables_paginator.paginate(DatabaseName=database['Name']):
+                                tables.extend(page['TableList'])
+                return tables
+
+            resources_to_process.extend(collect_resources('table', get_tables))
+
+    if args.serialize_file:
+        save_resources_to_file(resources_to_process, args.serialize_file)
+        logger.info(f"Resources serialized to file: {args.serialize_file}")
+        return
+
+    if args.deploy_file:
+        if not args.config_path:
+            logger.error("--config-path must be provided when using --deploy-from-file")
+            sys.exit(1)
+        resources_to_process = load_resources_from_file(args.deploy_file)
+
+    def process_resource(resource):
+        if resource['type'] == 'job':
+            process_job(resource['data'], mapping)
+        elif resource['type'] == 'table':
+            process_table(resource['data'], mapping)
+
+    for resource in resources_to_process:
+        process_resource(resource)
 
 
 if __name__ == "__main__":
