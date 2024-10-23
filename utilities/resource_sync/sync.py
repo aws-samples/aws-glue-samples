@@ -402,6 +402,8 @@ def organize_table_param(table_argument, mapping):
       del table_argument['TableInput']['CreatedBy']
     if 'IsRegisteredWithLakeFormation' in table_argument['TableInput']:
       del table_argument['TableInput']['IsRegisteredWithLakeFormation']
+    if 'IsMultiDialectView' in table_argument['TableInput']:
+      del table_argument['TableInput']['IsMultiDialectView']
     if 'VersionId' in table_argument['TableInput']:
       del table_argument['TableInput']['VersionId']
 
