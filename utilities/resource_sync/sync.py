@@ -684,6 +684,8 @@ def synchronize_database(database_name, mapping, database):
 
 
 def main():
+    global resources
+
     if args.config_path:
         logger.debug(f"Loading Mapping config file: {args.config_path}")
         mapping = load_mapping_config_file(args.config_path)
