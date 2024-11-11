@@ -13,33 +13,33 @@ Note: This utility is not designed for synchronizing huge number of tables and p
 You can run this utility in any location where you have Python and the following environment.
 
 ### Pre-requisite
-* Python 3.6 or later
+* Python 3.9 or later
 * Latest version of boto3
 
 ### Command line Syntax
 ```
-$ sync.py [-h] [--targets TARGETS] [--src-job-names SRC_JOB_NAMES] [--src-database-names SRC_DATABASE_NAMES] [--src-table-names SRC_TABLE_NAMES] [--src-profile SRC_PROFILE] [--src-region SRC_REGION]
-               [--src-s3-endpoint-url SRC_S3_ENDPOINT_URL] [--src-sts-endpoint-url SRC_STS_ENDPOINT_URL] [--src-glue-endpoint-url SRC_GLUE_ENDPOINT_URL] [--dst-profile DST_PROFILE]
-               [--dst-region DST_REGION] [--dst-s3-endpoint-url DST_S3_ENDPOINT_URL] [--dst-sts-endpoint-url DST_STS_ENDPOINT_URL] [--dst-glue-endpoint-url DST_GLUE_ENDPOINT_URL]
-               [--sts-role-arn STS_ROLE_ARN] [--src-role-arn SRC_ROLE_ARN] [--dst-role-arn DST_ROLE_ARN] [--skip-no-dag-jobs SKIP_NO_DAG_JOBS] [--overwrite-jobs OVERWRITE_JOBS]
-               [--overwrite-databases OVERWRITE_DATABASES] [--overwrite-tables OVERWRITE_TABLES] [--copy-job-script COPY_JOB_SCRIPT] [--config-path CONFIG_PATH] [--skip-errors] [--dryrun]
+$ python3 sync.py [-h] [--targets TARGETS] [--src-job-names SRC_JOB_NAMES] [--src-database-names SRC_DATABASE_NAMES] [--src-connection-names SRC_CONNECTION_NAMES] [--src-table-names SRC_TABLE_NAMES] [--src-profile SRC_PROFILE]
+               [--src-region SRC_REGION] [--src-s3-endpoint-url SRC_S3_ENDPOINT_URL] [--src-sts-endpoint-url SRC_STS_ENDPOINT_URL] [--src-glue-endpoint-url SRC_GLUE_ENDPOINT_URL] [--dst-profile DST_PROFILE] [--dst-region DST_REGION]
+               [--dst-s3-endpoint-url DST_S3_ENDPOINT_URL] [--dst-sts-endpoint-url DST_STS_ENDPOINT_URL] [--dst-glue-endpoint-url DST_GLUE_ENDPOINT_URL] [--sts-role-arn STS_ROLE_ARN] [--src-role-arn SRC_ROLE_ARN]
+               [--dst-role-arn DST_ROLE_ARN] [--skip-no-dag-jobs SKIP_NO_DAG_JOBS] [--overwrite-jobs OVERWRITE_JOBS] [--overwrite-databases OVERWRITE_DATABASES] [--overwrite-tables OVERWRITE_TABLES]
+               [--overwrite-connections OVERWRITE_CONNECTIONS] [--copy-job-script COPY_JOB_SCRIPT] [--config-path CONFIG_PATH] [--serialize-to-file SERIALIZE_FILE] [--deserialize-from-file DESERIALIZE_FILE] [--skip-errors] [--dryrun]
                [--skip-prompt] [-v]
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
-  --targets TARGETS     The comma separated list of targets [job, catalog]. If it is not set, [job] will be chosen. (possible values: [job, catalog]. default: job)
+  --targets TARGETS     The comma separated list of targets [job, catalog, connection]. (possible values: [job, catalog, connection]. default: job)
   --src-job-names SRC_JOB_NAMES
                         The comma separated list of the names of AWS Glue jobs which are going to be copied from source AWS account. If it is not set, all the Glue jobs in the source account will be copied to the destination account.
   --src-database-names SRC_DATABASE_NAMES
                         The comma separated list of the names of AWS Glue databases which are going to be copied from source AWS account. If it is not set, all the Glue databases in the source account will be copied to the destination account.
+  --src-connection-names SRC_CONNECTION_NAMES
+                        The comma separated list of the names of AWS Glue connections which are going to be copied from source AWS account. If it is not set, all the Glue connections in the source account will be copied to the destination account.
   --src-table-names SRC_TABLE_NAMES
                         The comma separated list of the names of AWS Glue tables which are going to be copied from source AWS account. If it is not set, all the Glue tables in the specified databases will be copied to the destination account.
   --src-profile SRC_PROFILE
                         AWS named profile name for source AWS account.
   --src-region SRC_REGION
                         Source region name.
-  --src-role-arn SRC_ROLE_ARN
-                        IAM role ARN to be assumed to access source account resources.
   --src-s3-endpoint-url SRC_S3_ENDPOINT_URL
                         Source endpoint URL for Amazon S3.
   --src-sts-endpoint-url SRC_STS_ENDPOINT_URL
@@ -57,7 +57,9 @@ optional arguments:
   --dst-glue-endpoint-url DST_GLUE_ENDPOINT_URL
                         Destination endpoint URL for AWS Glue.
   --sts-role-arn STS_ROLE_ARN
-                        IAM role arn to be assumed to access destination account resources.
+                        IAM role ARN to be assumed to access destination account resources.
+  --src-role-arn SRC_ROLE_ARN
+                        IAM role ARN to be assumed to access source account resources.
   --dst-role-arn DST_ROLE_ARN
                         IAM role ARN to be assumed to access destination account resources.
   --skip-no-dag-jobs SKIP_NO_DAG_JOBS
@@ -68,10 +70,16 @@ optional arguments:
                         Overwrite Glue databases when the tables already exist. (possible values: [true, false]. default: true)
   --overwrite-tables OVERWRITE_TABLES
                         Overwrite Glue tables when the tables already exist. (possible values: [true, false]. default: true)
+  --overwrite-connections OVERWRITE_CONNECTIONS
+                        Overwrite Glue connections when the connections already exist. (possible values: [true, false]. default: true)
   --copy-job-script COPY_JOB_SCRIPT
                         Copy Glue job script from the source account to the destination account. (possible values: [true, false]. default: true)
   --config-path CONFIG_PATH
                         The config file path to provide parameter mapping. You can set S3 path or local file path.
+  --serialize-to-file SERIALIZE_FILE
+                        Serialize jobs and/or tables to a local file instead of deploying.
+  --deserialize-from-file DESERIALIZE_FILE
+                        Deserialize jobs and/or tables from a local file instead of source account.
   --skip-errors         (Optional) Skip errors and continue execution. (default: false)
   --dryrun              (Optional) Display the operations that would be performed using the specified command without actually running them (default: false)
   --skip-prompt         (Optional) Skip prompt (default: false)
@@ -140,6 +148,16 @@ $ python3 sync.py --targets catalog --src-profile test1 --src-region eu-west-3 -
 $ python3 sync.py --targets catalog --src-profile test1 --src-region eu-west-3 --dst-profile test2 --dst-region eu-west-3 --src-database-names test --src-table-names products1,products2 --config-path mapping.json
 ```
 
+### Example 6. Serialize selected Glue Job and Data Catalog resources
+```
+$ python3 python sync.py --src-role-arn SRC_ACCOUNT_IAM_ROLE_ARN --src-region us-east-1 --serialize-to-file resources.json --targets job,catalog --skip-prompt
+```
+
+### Example 7. Deploy Glue resources from serialized file
+```
+$ python3 sync.py --dst-role-arn TARGET_ACCOUNT_IAM_ROLE_ARN --dst-region us-east-1 --deserialize-from-file resources.json --config-path mapping.json --targets job,catalog --skip-prompt
+```
+
 ### Limitations
 * Following resources are not synchronized.
   * Catalog
@@ -148,7 +166,6 @@ $ python3 sync.py --targets catalog --src-profile test1 --src-region eu-west-3 -
   * Lake Formation resource links
   * Lake Formation governed tables
   * Partition indexes
-  * Connections
   * Schema Registry
   * Security configurations
   * Triggers

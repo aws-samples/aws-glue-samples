@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2019-2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
 import json
@@ -16,11 +16,13 @@ import logging
 # Configure credentials and required parameters
 parser = argparse.ArgumentParser()
 parser.add_argument('--targets', dest='targets', type=str, default="job",
-                    help='The comma separated list of targets [job, catalog]. (possible values: [job, catalog]. default: job)')
+                    help='The comma separated list of targets [job, catalog, connection]. (possible values: [job, catalog, connection]. default: job)')
 parser.add_argument('--src-job-names', dest='src_job_names', type=str,
                     help='The comma separated list of the names of AWS Glue jobs which are going to be copied from source AWS account. If it is not set, all the Glue jobs in the source account will be copied to the destination account.')
 parser.add_argument('--src-database-names', dest='src_database_names', type=str,
                     help='The comma separated list of the names of AWS Glue databases which are going to be copied from source AWS account. If it is not set, all the Glue databases in the source account will be copied to the destination account.')
+parser.add_argument('--src-connection-names', dest='src_connection_names', type=str,
+                    help='The comma separated list of the names of AWS Glue connections which are going to be copied from source AWS account. If it is not set, all the Glue connections in the source account will be copied to the destination account.')
 parser.add_argument('--src-table-names', dest='src_table_names', type=str,
                     help='The comma separated list of the names of AWS Glue tables which are going to be copied from source AWS account. If it is not set, all the Glue tables in the specified databases will be copied to the destination account.')
 parser.add_argument('--src-profile', dest='src_profile', type=str,
@@ -57,6 +59,8 @@ parser.add_argument('--overwrite-databases', dest='overwrite_databases', type=st
                     help='Overwrite Glue databases when the tables already exist. (possible values: [true, false]. default: true)')
 parser.add_argument('--overwrite-tables', dest='overwrite_tables', type=strtobool, default=True,
                     help='Overwrite Glue tables when the tables already exist. (possible values: [true, false]. default: true)')
+parser.add_argument('--overwrite-connections', dest='overwrite_connections', type=strtobool, default=True,
+                    help='Overwrite Glue connections when the connections already exist. (possible values: [true, false]. default: true)')
 parser.add_argument('--copy-job-script', dest='copy_job_script', type=strtobool, default=True,
                     help='Copy Glue job script from the source account to the destination account. (possible values: [true, false]. default: true)')
 parser.add_argument('--config-path', dest='config_path', type=str,
@@ -425,6 +429,8 @@ def organize_table_param(table_argument, mapping):
     # Drop unneeded parameters
     if 'CatalogId' in table_argument['TableInput']:
       del table_argument['TableInput']['CatalogId']
+    if 'CatalogIdentifier' in table_argument['TableInput']:
+      del table_argument['TableInput']['CatalogIdentifier']
     if 'DatabaseName' in table_argument['TableInput']:
       del table_argument['TableInput']['DatabaseName']
     if 'DatabaseId' in table_argument['TableInput']:
@@ -462,6 +468,10 @@ def organize_database_param(database_argument, mapping):
     # Drop unneeded parameters
     if 'CatalogId' in database_argument['DatabaseInput']:
       del database_argument['DatabaseInput']['CatalogId']
+    if 'CatalogIdentifier' in database_argument['DatabaseInput']:
+      del database_argument['DatabaseInput']['CatalogIdentifier']
+    if 'DatabaseId' in database_argument['DatabaseInput']:
+      del database_argument['DatabaseInput']['DatabaseId']
     if 'CreateTime' in database_argument['DatabaseInput']:
       del database_argument['DatabaseInput']['CreateTime']
 
@@ -470,6 +480,41 @@ def organize_database_param(database_argument, mapping):
         replace_param_with_mapping(database_argument, mapping)
 
     return database_argument
+
+
+def organize_connection_param(connection_argument, mapping):
+    """Function to organize a connection argument parameters to prepare for create_connection API.
+
+    Args:
+        connection_argument: Input connection argument parameter.
+        mapping: Mapping configuration to replace the parameter.
+
+    Returns:
+        connection_argument: Organized connection argument parameter.
+    """
+    # Drop unneeded parameters
+    if 'CreationTime' in connection_argument['ConnectionInput']:
+      del connection_argument['ConnectionInput']['CreationTime']
+    if 'LastConnectionValidationTime' in connection_argument['ConnectionInput']:
+      del connection_argument['ConnectionInput']['LastConnectionValidationTime']
+    if 'LastUpdatedBy' in connection_argument['ConnectionInput']:
+      del connection_argument['ConnectionInput']['LastUpdatedBy']
+    if 'LastUpdatedTime' in connection_argument['ConnectionInput']:
+      del connection_argument['ConnectionInput']['LastUpdatedTime']
+    if 'Status"' in connection_argument['ConnectionInput']:
+      del connection_argument['ConnectionInput']['Status"']
+    if 'StatusReason' in connection_argument['ConnectionInput']:
+      del connection_argument['ConnectionInput']['StatusReason']
+
+    # Add required parameters
+    if 'ConnectionProperties' not in connection_argument['ConnectionInput']:
+      connection_argument['ConnectionInput']['ConnectionProperties'] = {}
+
+    # Overwrite parameters
+    if mapping:
+        replace_param_with_mapping(connection_argument, mapping)
+
+    return connection_argument
 
 
 def get_partition_input(partition_argument, value):
@@ -683,6 +728,66 @@ def synchronize_database(database_name, mapping, database):
             synchronize_table(table, mapping)
 
 
+def get_connection_names():
+    if args.deserialize_file:
+        return [db['Name'] for db in resources.get('connections', [])]
+    else:
+        if args.src_connection_names:
+            return args.src_connection_names.split(',')
+        else:
+            connection_names = []
+            get_connections_paginator = src_glue.get_paginator('get_connections')
+            for page in get_connections_paginator.paginate():
+                connection_names.extend([db['Name'] for db in page['ConnectionList']])
+            return connection_names
+
+
+def get_connection_definition(connection_name):
+    if args.deserialize_file:
+        connection_definitions = {db['Name']: db for db in resources.get('connections', [])}
+        connection = connection_definitions.get(connection_name)
+        if not connection:
+            logger.error(f"Connection '{connection_name}' not found in deserialized data.")
+        return connection
+    else:
+        res = src_glue.get_connection(Name=connection_name)
+        connection = res['Connection']
+        return connection
+
+
+def synchronize_connection(connection_name, mapping, connection):
+    logger.debug(f"Synchronizing connection '{connection_name}'")
+
+    # Organize connection parameters
+    connection_argument = {}
+    connection_argument['ConnectionInput'] = connection
+    connection_argument = organize_connection_param(connection_argument, mapping)
+
+    # Copy connection configuration
+    try:
+        logger.debug(f"Checking if connection '{connection_name}' exists in the destination account.")
+        current_connection = dst_glue.get_connection(Name=connection_name)
+        logger.debug(f"Current connection '{connection_name}' configuration: {current_connection}")
+        if args.overwrite_connections:
+            connection_argument['Name'] = connection_name
+            logger.debug(f"Updating connection '{connection_name}' with configuration: '{connection_argument}'")
+            if do_update:
+                dst_glue.update_connection(**connection_argument)
+            logger.info(f"The connection '{connection_name}' has been overwritten.")
+    except dst_glue.exceptions.EntityNotFoundException:
+        logger.debug(f"Creating connection '{connection_name}' with configuration: '{connection_argument}'")
+        connection_argument['ConnectionInput']['Name'] = connection_name
+        if do_update:
+            dst_glue.create_connection(**connection_argument)
+        logger.info(f"New connection '{connection_name}' has been created.")
+    except Exception as e:
+        logger.error(f"Error occurred in copying connection: '{connection_name}'")
+        if args.skip_errors:
+            logger.error(f"Skipping error: {e}", exc_info=True)
+        else:
+            raise
+
+
 def main():
     global resources
 
@@ -733,6 +838,16 @@ def main():
             resources['tables'] = tables
             resources['partitions'] = partitions
 
+        # Serialize connections
+        if "connection" in args.targets:
+            connection_names = get_connection_names()
+            connections = []
+            for connection_name in connection_names:
+                connection = get_connection_definition(connection_name)
+                if connection:
+                    connections.append(connection)
+            resources['connections'] = connections
+
         # Write resources to the file
         with open(args.serialize_file, 'w') as f:
             json.dump(resources, f, default=str)
@@ -760,6 +875,13 @@ def main():
             database = get_database_definition(database_name)
             if database:
                 synchronize_database(database_name, mapping, database)
+
+    if "connection" in args.targets:
+        connection_names = get_connection_names()
+        for connection_name in connection_names:
+            connection = get_connection_definition(connection_name)
+            if connection:
+                synchronize_connection(connection_name, mapping, connection)
 
 
 if __name__ == "__main__":
