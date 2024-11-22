@@ -501,8 +501,10 @@ def organize_connection_param(connection_argument, mapping):
       del connection_argument['ConnectionInput']['LastUpdatedBy']
     if 'LastUpdatedTime' in connection_argument['ConnectionInput']:
       del connection_argument['ConnectionInput']['LastUpdatedTime']
-    if 'Status"' in connection_argument['ConnectionInput']:
-      del connection_argument['ConnectionInput']['Status"']
+    if 'ConnectionSchemaVersion' in connection_argument['ConnectionInput']:
+      del connection_argument['ConnectionInput']['ConnectionSchemaVersion']
+    if 'Status' in connection_argument['ConnectionInput']:
+      del connection_argument['ConnectionInput']['Status']
     if 'StatusReason' in connection_argument['ConnectionInput']:
       del connection_argument['ConnectionInput']['StatusReason']
 
