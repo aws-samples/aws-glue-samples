@@ -34,4 +34,4 @@ log4j.appender.console.layout.ConversionPattern = %d{yyyy-MM-dd HH:mm:ss} %p %c{
 
 ENV JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk/
 
-ENTRYPOINT ["/bin/bash", "-c"]:
+ENTRYPOINT ["/bin/bash", "-c"]
