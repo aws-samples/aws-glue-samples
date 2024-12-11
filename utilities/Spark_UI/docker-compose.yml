@@ -1,0 +1,11 @@
+version: '3'
+services:
+  spark-history:
+    build: .
+    ports:
+      - "18080:18080"
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      - SPARK_HISTORY_OPTS=-Dspark.history.fs.logDirectory=${LOG_DIR} -Dspark.hadoop.fs.s3a.access.key=${AWS_ACCESS_KEY_ID} -Dspark.hadoop.fs.s3a.secret.key=${AWS_SECRET_ACCESS_KEY} -Dspark.hadoop.fs.s3a.session.token=${AWS_SESSION_TOKEN}

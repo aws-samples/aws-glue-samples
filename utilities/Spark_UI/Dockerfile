@@ -22,6 +22,8 @@ RUN rm /opt/spark/jars/jsr305-3.0.0.jar && \
 RUN echo $'\n\
 spark.eventLog.enabled                      true\n\
 spark.history.ui.port                       18080\n\
+spark.hadoop.fs.s3a.impl                   org.apache.hadoop.fs.s3a.S3AFileSystem\n\
+spark.hadoop.fs.s3a.aws.credentials.provider org.apache.hadoop.fs.s3a.TemporaryAWSCredentialsProvider\n\
 ' > /opt/spark/conf/spark-defaults.conf
 
 RUN echo $'\n\
@@ -34,4 +36,4 @@ log4j.appender.console.layout.ConversionPattern = %d{yyyy-MM-dd HH:mm:ss} %p %c{
 
 ENV JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk/
 
-ENTRYPOINT ["/bin/bash", "-c"]:
+ENTRYPOINT ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.history.HistoryServer"]
