@@ -17,7 +17,7 @@ You can find the AWS Glue open-source Python libraries in a separate repository 
 
 ## Workshops
 
- - [AWS Glue Learning Series](https://catalog.us-east-1.prod.workshops.aws/workshops/3cf2db69-b022-4471-805a-f10daff4676e/en-US)
+ - [AWS Glue Learning Series](https://www.workshops.aws/?tag=Glue)
 
    In this comprehensive series, you'll learn everything from the basics of Glue to advanced optimization techniques.
 
