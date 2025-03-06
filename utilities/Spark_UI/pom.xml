@@ -6,25 +6,24 @@
 	<groupId>com.amazonaws</groupId>
 	<artifactId>HadoopForGlueSparkHistoryServer</artifactId>
 	<packaging>jar</packaging>
-	<version>2.0-SNAPSHOT</version>
+	<version>3.0-SNAPSHOT</version>
 	<name>HadoopForGlueSparkHistoryServer</name>
 	<url>http://maven.apache.org</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<jdk.version>1.8</jdk.version>
-		<hadoop.version>3.3.2</hadoop.version>
-		<awssdk.version>1.11.1026</awssdk.version>
-		<httpclient.version>4.5.13</httpclient.version>
-		<jackson.version>2.13.3</jackson.version>
-		<jackson.databind.version>2.13.3</jackson.databind.version>
+		<jdk.version>17</jdk.version>
+		<hadoop.version>3.4.0</hadoop.version>
+		<awssdk.version>2.30.7</awssdk.version>
+		<jackson.version>2.15.2</jackson.version>
+		<jackson.databind.version>2.15.2</jackson.databind.version>
 		<reload4j.version>1.2.25</reload4j.version>
 		<slf4j-reload4j.version>1.7.36</slf4j-reload4j.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<groupId>com.amazonaws</groupId>
-				<artifactId>aws-java-sdk-bom</artifactId>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
 				<version>${awssdk.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
@@ -79,33 +78,6 @@
 					<artifactId>jackson-annotations</artifactId>
 				</exclusion>
 			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>com.amazonaws</groupId>
-			<artifactId>aws-java-sdk-core</artifactId>
-			<exclusions>
-				<exclusion>
-					<groupId>com.fasterxml.jackson.core</groupId>
-					<artifactId>jackson-core</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.fasterxml.jackson.core</groupId>
-					<artifactId>jackson-databind</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.fasterxml.jackson.core</groupId>
-					<artifactId>jackson-annotations</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>com.amazonaws</groupId>
-			<artifactId>aws-java-sdk-s3</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
-			<version>${httpclient.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
