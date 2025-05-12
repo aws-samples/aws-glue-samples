@@ -81,6 +81,10 @@ You can find the AWS Glue open-source Python libraries in a separate repository 
 
    Demonstrates how to identify the changed data for a semi-structured source (JSON) and capture the full historical data changes (SCD Type 2) and store them in an S3 data lake.
 
+ - [Learning Apache Iceberg on AWS](ICEBERG.md)
+
+   Provides a collection of links relevant to learn Apache Iceberg on AWS.
+
 ### Development, Test, and CI/CD
 
  - [Develop and test AWS Glue version 3.0 and 4.0 jobs locally using a Docker container](https://aws.amazon.com/blogs/big-data/develop-and-test-aws-glue-version-3-0-jobs-locally-using-a-docker-container/)
