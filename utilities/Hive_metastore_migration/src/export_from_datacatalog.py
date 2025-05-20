@@ -33,11 +33,8 @@ def change_schemas(sql_context, databases, tables, partitions):
 
 
 def datacatalog_migrate_to_hive_metastore(sc, sql_context, databases, tables, partitions, connection):
-
     hive_metastore = HiveMetastore(connection, sql_context)
-
     transform_databases_tables_partitions(sc, sql_context, hive_metastore, databases, tables, partitions)
-
     hive_metastore.export_to_metastore()
 
 
