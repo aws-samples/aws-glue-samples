@@ -1503,7 +1503,7 @@ class HiveMetastore:
         self.write_table(table_name="SKEWED_STRING_LIST_VALUES", df=self.ms_skewed_string_list_values)
         self.write_table(table_name="SKEWED_COL_VALUE_LOC_MAP", df=self.ms_skewed_col_value_loc_map)
         self.write_table(table_name="SORT_COLS", df=self.ms_sort_cols)
-        self.write_table(table_name="TBLS", df=self.ms_tbls)
+        self._write_tbls_table(table_name="TBLS", df=self.ms_tbls)
         self.write_table(table_name="TABLE_PARAMS", df=self.ms_table_params)
         self.write_table(table_name="PARTITION_KEYS", df=self.ms_partition_keys)
         self.write_table(table_name="PARTITIONS", df=self.ms_partitions)
@@ -1531,6 +1531,19 @@ class HiveMetastore:
         for col in [i.jsonValue() for i in source_df.schema]:
             if col["name"] == "CTLG_NAME":
                 df = df.withColumn("CTLG_NAME", lit("hive"))
+        self.write_table(table_name=table_name, df=df)
+
+    def _write_tbls_table(self, table_name, df) -> None:
+        """
+        Handling IS_REWRITE_ENABLED column in TBLS table which does not accept null.
+        Context:
+        - HIVE-14496 added `IS_REWRITE_ENABLED` column to Hive 2.2.0, and it doesn't accept null until HIVE-18046 (Hive 3.0.0)
+        """
+
+        source_df = self.read_table(table_name=table_name)
+        for col in [i.jsonValue() for i in source_df.schema]:
+            if col["name"] == "IS_REWRITE_ENABLED":
+                df = df.withColumn("IS_REWRITE_ENABLED", lit(0))
         self.write_table(table_name=table_name, df=df)
 
 
