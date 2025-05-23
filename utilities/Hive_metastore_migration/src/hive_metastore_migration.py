@@ -511,6 +511,14 @@ class HiveMetastoreTransformer:
         )
 
     def transform_ms_columns(self, ms_columns):
+        def extract_row(row):
+            def truncate(x):
+                return x[:255] if hasattr(x,"__getitem__") else x
+            return (
+                row['COLUMN_NAME'],
+                row['TYPE_NAME'],
+                truncate(row['COMMENT'])
+            )
         return self.transform_df_with_idx(
             df=ms_columns,
             id_col="CD_ID",
@@ -523,7 +531,7 @@ class HiveMetastoreTransformer:
                     StructField(name="comment", dataType=StringType()),
                 ]
             ),
-            payload_func=lambda row: (row["COLUMN_NAME"], row["TYPE_NAME"], row["COMMENT"]),
+            payload_func=extract_row,
         )
 
     def transform_ms_skewed_col_names(self, ms_skewed_col_names):
