@@ -475,6 +475,14 @@ class HiveMetastoreTransformer:
         return self.sql_context.createDataFrame(rdd_result, schema)
 
     def transform_ms_partition_keys(self, ms_partition_keys):
+        def extract_row(row):
+            def truncate(x):
+                return x[:255] if hasattr(x,"__getitem__") else x
+            return (
+                row['PKEY_NAME'],
+                row['PKEY_NAME'],
+                truncate(row['PKEY_COMMENT'])
+            )
         return self.transform_df_with_idx(
             df=ms_partition_keys,
             id_col="TBL_ID",
@@ -487,7 +495,7 @@ class HiveMetastoreTransformer:
                     StructField(name="comment", dataType=StringType()),
                 ]
             ),
-            payload_func=lambda row: (row["PKEY_NAME"], row["PKEY_TYPE"], row["PKEY_COMMENT"]),
+            payload_func=extract_row,
         )
 
     def transform_ms_partition_key_vals(self, ms_partition_key_vals):
