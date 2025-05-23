@@ -243,6 +243,7 @@ as an Glue ETL job, if AWS Glue can directly connect to your Hive metastore.
    - `--database-input-path` set to the S3 path containing only databases. For example: `s3://someBucket/output_path_from_previous_job/databases`
    - `--table-input-path` set to the S3 path containing only tables. For example: `s3://someBucket/output_path_from_previous_job/tables`
    - `--partition-input-path` set to the S3 path containing only partitions. For example: `s3://someBucket/output_path_from_previous_job/partitions`
+   - `--database-prefix` (optional) set to a string prefix that is applied to the database name created in AWS Glue Data Catalog. You can use it as a way to track the origin of the metadata, and avoid naming conflicts. The default is the empty string.
 
    Also, because there is no need to connect to any JDBC source, the job doesn't
    require any connections.

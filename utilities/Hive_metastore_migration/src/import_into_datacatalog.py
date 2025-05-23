@@ -1,20 +1,7 @@
 #  Copyright 2016-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  Licensed under the Amazon Software License (the "License"). You may not use
-#  this file except in compliance with the License. A copy of the License is
-#  located at
-#
-#    http://aws.amazon.com/asl/
-#
-#  and in the "LICENSE" file accompanying this file. This file is distributed
-#  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express
-#  or implied. See the License for the specific language governing
-#  permissions and limitations under the License.
-
+#  SPDX-License-Identifier: MIT-0
 
 from __future__ import print_function
-
-import logging
-import os
 
 from pyspark.sql.functions import lit, struct, array, col, concat
 
@@ -22,11 +9,6 @@ from awsglue.context import GlueContext
 from awsglue.dynamicframe import DynamicFrame
 
 from hive_metastore_migration import *
-
-
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-logger.setLevel(getattr(logging, os.getenv('LOG_LEVEL', 'INFO')))
 
 
 def transform_df_to_catalog_import_schema(sql_context, glue_context, df_databases, df_tables, df_partitions):
@@ -81,14 +63,14 @@ def metastore_import_from_s3(sql_context, glue_context, db_input_dir, tbl_input_
     databases = sql_context.read.json(path=db_input_dir, schema=METASTORE_DATABASE_SCHEMA)
     tables = sql_context.read.json(path=tbl_input_dir, schema=METASTORE_TABLE_SCHEMA)
     partitions = sql_context.read.json(path=parts_input_dir, schema=METASTORE_PARTITION_SCHEMA)
-	
-	# Changes to Prefix on database
+
+    # Changes to Prefix on database
     if db_prefix:
         databases = databases.withColumn('item', struct(col('item.description'), col('item.locationUri'), concat(lit(db_prefix),col('item.name')).alias('name'), col('item.parameters')))
         tables = tables.withColumn("database",concat(lit(db_prefix),col('database')).alias('database'))
         partitions = partitions.withColumn("database",concat(lit(db_prefix),col('database')).alias('database'))
         partitions = partitions.withColumn('item', struct(col('item.creationTime'), col('item.creationTime'), concat(lit(db_prefix),col('item.namespaceName')).alias('namespaceName'), col('item.parameters'), col('item.storageDescriptor'), col('item.values')))
-	
+
 
     # load
     import_datacatalog(sql_context, glue_context, datacatalog_name, databases, tables, partitions, region)
@@ -146,7 +128,7 @@ def main():
             db_input_dir=options['database_input_path'],
             tbl_input_dir=options['table_input_path'],
             parts_input_dir=options['partition_input_path'],
-			db_prefix=options.get('database_prefix') or '',
+            db_prefix=options.get('database_prefix') or '',
             datacatalog_name='datacatalog',
             region=options.get('region') or 'us-east-1'
         )
