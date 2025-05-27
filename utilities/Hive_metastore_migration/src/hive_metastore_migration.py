@@ -9,6 +9,7 @@ import re
 # except for python 2.7 standard library and Spark 2.1
 import sys
 from datetime import datetime, timedelta, tzinfo
+import yaml
 from time import localtime, strftime
 from types import MethodType
 
@@ -1606,6 +1607,39 @@ def parse_arguments(args):
     return options
 
 
+def parse_arguments_from_yaml_file(args):
+    """
+    This function accepts the path to a config file
+    and extracts the needed arguments for the metastore migration
+    ----------
+    Return:
+        Dictionary of config options
+    """
+    parser = argparse.ArgumentParser(prog=args[0])
+    parser.add_argument('-f', '--config_file', required=True, default='artifacts/config.yaml`', help='Provide yaml configuration file path to read migration arguments from. Default path: `artifacts/config.yaml`')
+    options = get_options(parser, args)
+    config_file_path = options['config_file']
+    ## read the yaml file
+    with open(config_file_path, 'r') as yaml_file_stream:
+        config_options = yaml.load(yaml_file_stream)
+
+    if config_options['mode'] == FROM_METASTORE:
+        validate_options_in_mode(
+            options=config_options, mode=FROM_METASTORE,
+            required_options=['output_path'],
+            not_allowed_options=['input_path']
+        )
+    elif config_options['mode'] == TO_METASTORE:
+        validate_options_in_mode(
+            options=config_options, mode=TO_METASTORE,
+            required_options=['input_path'],
+            not_allowed_options=['output_path']
+        )
+    else:
+        raise AssertionError('unknown mode ' + options['mode'])
+
+    return config_options
+
 def get_spark_env():
     try:
         sc = SparkContext.getOrCreate()
@@ -1733,7 +1767,10 @@ def validate_aws_regions(region):
 
 
 def main():
-    options = parse_arguments(sys.argv)
+    # options = parse_arguments(sys.argv)
+
+    ## This now reads options from path to config yaml file
+    options = parse_arguments_from_yaml_file(sys.argv)
 
     connection = {"url": options["jdbc_url"], "user": options["jdbc_username"], "password": options["jdbc_password"]}
     db_prefix = options.get("database_prefix") or ""
