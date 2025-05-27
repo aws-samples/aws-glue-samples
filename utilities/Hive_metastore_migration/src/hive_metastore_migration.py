@@ -1581,64 +1581,52 @@ def get_options(parser, args):
 
 
 def parse_arguments(args):
+    """
+    parse arguments for the metastore migration.
+    If a yaml file is provided, it will override any parameters specified on the command line.
+    ----------
+    Return:
+        Dictionary of config options
+    """
     parser = argparse.ArgumentParser(prog=args[0])
-    parser.add_argument("-m", "--mode", required=True, choices=[FROM_METASTORE, TO_METASTORE], help="Choose to migrate metastore either from JDBC or from S3")
-    parser.add_argument("-U", "--jdbc-url", required=True, help="Hive metastore JDBC url, example: jdbc:mysql://metastore.abcd.us-east-1.rds.amazonaws.com:3306")
-    parser.add_argument("-u", "--jdbc-username", required=True, help="Hive metastore JDBC user name")
-    parser.add_argument("-p", "--jdbc-password", required=True, help="Hive metastore JDBC password")
+    parser.add_argument("-m", "--mode", required=False, choices=[FROM_METASTORE, TO_METASTORE], help="Choose to migrate metastore either from JDBC or from S3")
+    parser.add_argument("-U", "--jdbc-url", required=False, help="Hive metastore JDBC url, example: jdbc:mysql://metastore.abcd.us-east-1.rds.amazonaws.com:3306")
+    parser.add_argument("-u", "--jdbc-username", required=False, help="Hive metastore JDBC user name")
+    parser.add_argument("-p", "--jdbc-password", required=False, help="Hive metastore JDBC password")
     parser.add_argument("-d", "--database-prefix", required=False, help="Optional prefix for database names in Glue DataCatalog")
     parser.add_argument("-t", "--table-prefix", required=False, help="Optional prefix for table name in Glue DataCatalog")
     parser.add_argument("-o", "--output-path", required=False, help="Output path, either local directory or S3 path")
     parser.add_argument("-i", "--input_path", required=False, help="Input path, either local directory or S3 path")
-
+    parser.add_argument("-f", "--config_file", required=False, help="yaml configuration file path to read migration arguments from.")
     options = get_options(parser, args)
 
-    if options["mode"] == FROM_METASTORE:
+    if options.get("config_file") is not None:
+        # parse yaml config file if provided
+        config_file_path = options["config_file"]
+        logger.info(f"config_file provided. Parsing arguments from {options["config_file"]}")
+        with open(config_file_path, 'r') as yaml_file_stream:
+            config_options = yaml.load(yaml_file_stream, Loader=yaml.FullLoader)
+        options = {**options, **config_options}
+
+    if options.get("mode") is None:
+        raise AssertionError("--mode options is required: either from_metastore or to_metastore")
+    elif options["mode"] == FROM_METASTORE:
         validate_options_in_mode(
-            options=options, mode=FROM_METASTORE, required_options=["output_path"], not_allowed_options=["input_path"]
+            options=options, mode=FROM_METASTORE,
+            required_options=["jdbc_url", "jdbc_username", "jdbc_password", "output_path"],
+            not_allowed_options=["input_path"]
         )
     elif options["mode"] == TO_METASTORE:
         validate_options_in_mode(
-            options=options, mode=TO_METASTORE, required_options=["input_path"], not_allowed_options=["output_path"]
+            options=options, mode=TO_METASTORE,
+            required_options=["jdbc_url", "jdbc_username", "jdbc_password", "input_path"],
+            not_allowed_options=["output_path"]
         )
     else:
         raise AssertionError("unknown mode " + options["mode"])
 
     return options
 
-
-def parse_arguments_from_yaml_file(args):
-    """
-    This function accepts the path to a config file
-    and extracts the needed arguments for the metastore migration
-    ----------
-    Return:
-        Dictionary of config options
-    """
-    parser = argparse.ArgumentParser(prog=args[0])
-    parser.add_argument('-f', '--config_file', required=True, default='artifacts/config.yaml`', help='Provide yaml configuration file path to read migration arguments from. Default path: `artifacts/config.yaml`')
-    options = get_options(parser, args)
-    config_file_path = options['config_file']
-    ## read the yaml file
-    with open(config_file_path, 'r') as yaml_file_stream:
-        config_options = yaml.load(yaml_file_stream)
-
-    if config_options['mode'] == FROM_METASTORE:
-        validate_options_in_mode(
-            options=config_options, mode=FROM_METASTORE,
-            required_options=['output_path'],
-            not_allowed_options=['input_path']
-        )
-    elif config_options['mode'] == TO_METASTORE:
-        validate_options_in_mode(
-            options=config_options, mode=TO_METASTORE,
-            required_options=['input_path'],
-            not_allowed_options=['output_path']
-        )
-    else:
-        raise AssertionError('unknown mode ' + options['mode'])
-
-    return config_options
 
 def get_spark_env():
     try:
@@ -1767,10 +1755,7 @@ def validate_aws_regions(region):
 
 
 def main():
-    # options = parse_arguments(sys.argv)
-
-    ## This now reads options from path to config yaml file
-    options = parse_arguments_from_yaml_file(sys.argv)
+    options = parse_arguments(sys.argv)
 
     connection = {"url": options["jdbc_url"], "user": options["jdbc_username"], "password": options["jdbc_password"]}
     db_prefix = options.get("database_prefix") or ""

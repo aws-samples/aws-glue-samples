@@ -191,17 +191,30 @@ as an Glue ETL job, if AWS Glue can directly connect to your Hive metastore.
 2. Submit the `hive_metastore_migration.py` Spark script to your Spark cluster
    using the following parameters:
 
-   - Set `--config_file` to `<path_to_your_config_yaml_file>` (default path: `artifacts/config.yaml`)
+   - Set `--direction` to `from_metastore`, or omit the argument since
+     `from_metastore` is the default.
 
-   - Provide the following configuration parameters in the configuration yaml file:
-   ```
-    * mode
-    * jdbc-url
-    * jdbc-username
-    * jdbc-password
-    * database-prefix
-    * table-prefix
-   ```
+   - Provide the JDBC connection information through these arguments:
+     `--jdbc-url`, `--jdbc-username`, and `--jdbc-password`.
+
+   - The argument `--output-path` is required. It is either a local file system location
+     or an S3 location. If the output path is a local directory, you can upload the data
+     to an S3 location manually. If it is an S3 path, you need to make sure that the Spark
+     cluster has EMRFS library in its class path. The script will export the metadata to a
+     subdirectory of the output-path you provided.
+     
+   - `--database-prefix` and `--table-prefix` (optional) to set a string prefix that is applied to the 
+     database and table names. They are empty by default. 
+     
+   - Optionally, you can set `--config_file` to `<path_to_your_config_yaml_file>` which contains configuration parameters.
+     - Provide the following configuration parameters in the configuration yaml file:
+        * mode:
+        * jdbc_url:
+        * jdbc_username:
+        * jdbc_password:
+        * database_prefix:
+        * table_prefix:
+        * output_path:
 
    - Example spark-submit command to migrate Hive metastore to S3, tested on EMR-4.7.1:
    ```bash
@@ -210,7 +223,13 @@ as an Glue ETL job, if AWS Glue can directly connect to your Hive metastore.
     spark-submit --driver-class-path $DRIVER_CLASSPATH \
       --jars $MYSQL_JAR_PATH \
       /home/hadoop/hive_metastore_migration.py \
-      --config_file artifacts/config.yaml
+      --mode from-metastore \
+      --jdbc-url jdbc:mysql://metastore.foo.us-east-1.rds.amazonaws.com:3306 \
+      --jdbc-user hive \
+      --jdbc-password myJDBCPassword \
+      --database-prefix myHiveMetastore_ \
+      --table-prefix myHiveMetastore_ \
+      --output-path s3://mybucket/myfolder/
     ```
     
     - If the job finishes successfully, it creates 3 sub-folders in the S3 output path you

@@ -1,8 +1,0 @@
-mode:
-jdbc-url:
-jdbc-username:
-jdbc-password:
-database-prefix:
-table-prefix:
-output-path:
-input_path:
