@@ -1582,7 +1582,7 @@ def get_options(parser, args):
 def parse_arguments(args):
     """
     parse arguments for the metastore migration.
-    If a json file is provided, it will override any parameters specified on the command line.
+    If arguments are provided by both a json config file and command line, command line arguments will override any parameters specified on the json file.
     ----------
     Return:
         Dictionary of config options
@@ -1605,7 +1605,13 @@ def parse_arguments(args):
         logger.info(f"config_file provided. Parsing arguments from {config_file_path}")
         with open(config_file_path, 'r') as json_file_stream:
             config_options = json.load(json_file_stream)
-        options = {**options, **config_options}
+        
+        # merge options. command line options are prioritized.
+        for key in config_options:
+            if not options.get(key):
+                options[key] = config_options[key]
+            elif options[key] is None:
+                options[key] = config_options[key]
 
     if options.get("mode") is None:
         raise AssertionError("--mode options is required: either from_metastore or to_metastore")

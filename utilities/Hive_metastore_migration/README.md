@@ -404,7 +404,7 @@ as an Glue ETL job, if AWS Glue can directly connect to your Hive metastore.
           "jdbc_url": "JDBC URL",
           "jdbc_username": "JDBC username",
           "jdbc_password": "JDBC password",
-          "input_path": "Input local  or S3 path"
+          "input_path": "Input local or S3 path"
       }
       ```
     	 
