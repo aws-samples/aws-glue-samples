@@ -9,7 +9,6 @@ import re
 # except for python 2.7 standard library and Spark 2.1
 import sys
 from datetime import datetime, timedelta, tzinfo
-import yaml
 from time import localtime, strftime
 from types import MethodType
 
@@ -1583,7 +1582,7 @@ def get_options(parser, args):
 def parse_arguments(args):
     """
     parse arguments for the metastore migration.
-    If a yaml file is provided, it will override any parameters specified on the command line.
+    If a json file is provided, it will override any parameters specified on the command line.
     ----------
     Return:
         Dictionary of config options
@@ -1597,15 +1596,15 @@ def parse_arguments(args):
     parser.add_argument("-t", "--table-prefix", required=False, help="Optional prefix for table name in Glue DataCatalog")
     parser.add_argument("-o", "--output-path", required=False, help="Output path, either local directory or S3 path")
     parser.add_argument("-i", "--input_path", required=False, help="Input path, either local directory or S3 path")
-    parser.add_argument("-f", "--config_file", required=False, help="yaml configuration file path to read migration arguments from.")
+    parser.add_argument("-f", "--config_file", required=False, help="json configuration file path to read migration arguments from.")
     options = get_options(parser, args)
 
     if options.get("config_file") is not None:
-        # parse yaml config file if provided
+        # parse json config file if provided
         config_file_path = options["config_file"]
-        logger.info(f"config_file provided. Parsing arguments from {options["config_file"]}")
-        with open(config_file_path, 'r') as yaml_file_stream:
-            config_options = yaml.load(yaml_file_stream, Loader=yaml.FullLoader)
+        logger.info(f"config_file provided. Parsing arguments from {config_file_path}")
+        with open(config_file_path, 'r') as json_file_stream:
+            config_options = json.load(json_file_stream)
         options = {**options, **config_options}
 
     if options.get("mode") is None:
