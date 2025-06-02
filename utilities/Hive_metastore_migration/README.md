@@ -206,7 +206,7 @@ as an Glue ETL job, if AWS Glue can directly connect to your Hive metastore.
    - `--database-prefix` and `--table-prefix` (optional) to set a string prefix that is applied to the 
      database and table names. They are empty by default. 
      
-   - Optionally, you can set `--config_file` to `<path_to_your_config_json_file>` which contains the configuration parameters.
+   - Optionally, you can set `--config_file` to `<path_to_your_config_json_file>` which contains the configuration parameters. If same parameters are specified in both the configuration json file and the command line, the parameters specified on the command line will be used. 
      - Provide the following configuration parameters in the configuration json file:
       ```json
       {
@@ -396,7 +396,7 @@ as an Glue ETL job, if AWS Glue can directly connect to your Hive metastore.
 
          s3://gluemigrationbucket/export_output/<year-month-day-hour-minute-seconds>/
 
-   - Optionally, you can set `--config_file` to `<path_to_your_config_json_file>` which contains the configuration parameters.
+   - Optionally, you can set `--config_file` to `<path_to_your_config_json_file>` which contains the configuration parameters. If same parameters are specified in both the configuration json file and the command line, the parameters specified on the command line will be used. 
      - Provide the following configuration parameters in the configuration json file:
       ```json
       {
