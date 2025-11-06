@@ -1580,25 +1580,52 @@ def get_options(parser, args):
 
 
 def parse_arguments(args):
+    """
+    parse arguments for the metastore migration.
+    If arguments are provided by both a json config file and command line, command line arguments will override any parameters specified on the json file.
+    ----------
+    Return:
+        Dictionary of config options
+    """
     parser = argparse.ArgumentParser(prog=args[0])
-    parser.add_argument("-m", "--mode", required=True, choices=[FROM_METASTORE, TO_METASTORE], help="Choose to migrate metastore either from JDBC or from S3")
-    parser.add_argument("-U", "--jdbc-url", required=True, help="Hive metastore JDBC url, example: jdbc:mysql://metastore.abcd.us-east-1.rds.amazonaws.com:3306")
-    parser.add_argument("-u", "--jdbc-username", required=True, help="Hive metastore JDBC user name")
-    parser.add_argument("-p", "--jdbc-password", required=True, help="Hive metastore JDBC password")
+    parser.add_argument("-m", "--mode", required=False, choices=[FROM_METASTORE, TO_METASTORE], help="Choose to migrate metastore either from JDBC or from S3")
+    parser.add_argument("-U", "--jdbc-url", required=False, help="Hive metastore JDBC url, example: jdbc:mysql://metastore.abcd.us-east-1.rds.amazonaws.com:3306")
+    parser.add_argument("-u", "--jdbc-username", required=False, help="Hive metastore JDBC user name")
+    parser.add_argument("-p", "--jdbc-password", required=False, help="Hive metastore JDBC password")
     parser.add_argument("-d", "--database-prefix", required=False, help="Optional prefix for database names in Glue DataCatalog")
     parser.add_argument("-t", "--table-prefix", required=False, help="Optional prefix for table name in Glue DataCatalog")
     parser.add_argument("-o", "--output-path", required=False, help="Output path, either local directory or S3 path")
     parser.add_argument("-i", "--input_path", required=False, help="Input path, either local directory or S3 path")
-
+    parser.add_argument("-f", "--config_file", required=False, help="json configuration file path to read migration arguments from.")
     options = get_options(parser, args)
 
-    if options["mode"] == FROM_METASTORE:
+    if options.get("config_file") is not None:
+        # parse json config file if provided
+        config_file_path = options["config_file"]
+        logger.info(f"config_file provided. Parsing arguments from {config_file_path}")
+        with open(config_file_path, 'r') as json_file_stream:
+            config_options = json.load(json_file_stream)
+        
+        # merge options. command line options are prioritized.
+        for key in config_options:
+            if not options.get(key):
+                options[key] = config_options[key]
+            elif options[key] is None:
+                options[key] = config_options[key]
+
+    if options.get("mode") is None:
+        raise AssertionError("--mode options is required: either from_metastore or to_metastore")
+    elif options["mode"] == FROM_METASTORE:
         validate_options_in_mode(
-            options=options, mode=FROM_METASTORE, required_options=["output_path"], not_allowed_options=["input_path"]
+            options=options, mode=FROM_METASTORE,
+            required_options=["jdbc_url", "jdbc_username", "jdbc_password", "output_path"],
+            not_allowed_options=["input_path"]
         )
     elif options["mode"] == TO_METASTORE:
         validate_options_in_mode(
-            options=options, mode=TO_METASTORE, required_options=["input_path"], not_allowed_options=["output_path"]
+            options=options, mode=TO_METASTORE,
+            required_options=["jdbc_url", "jdbc_username", "jdbc_password", "input_path"],
+            not_allowed_options=["output_path"]
         )
     else:
         raise AssertionError("unknown mode " + options["mode"])
