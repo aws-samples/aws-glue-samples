@@ -1,0 +1,14 @@
+{
+  "skill_name": "glue-09-10-migration",
+  "models": [
+    {
+      "model": "claude-opus-4.6",
+      "success_rate": 1.0,
+      "trigger_accuracy": 1.0,
+      "avg_tokens_with_skill": 447.1666666666667,
+      "avg_tokens_without_skill": 432.8333333333333,
+      "avg_latency_ms_with_skill": 94780.0,
+      "avg_latency_ms_without_skill": 41205.166666666664
+    }
+  ]
+}
