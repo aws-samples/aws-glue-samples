@@ -229,7 +229,6 @@ Sessions run independently — one job's failure does not block others. Each ses
 - **Output data validation.** Run your own checks.
 - **Auto-scaling.** Worker count is fixed at preflight.
 - **Glue 2.0 / 3.0 source jobs.** Different breaking-change set; the skill halts.
-- **`pythonshell` and streaming jobs.** The catalogue is built for `glueetl`.
 - **ML transforms.** Hard blocker; the skill halts.
 - **Full revert fidelity.** Connections, SecurityConfiguration, MaxRetries, Timeout, etc. should be reviewed after revert.
 - **Change management.** No deployment-window or stakeholder coordination.
