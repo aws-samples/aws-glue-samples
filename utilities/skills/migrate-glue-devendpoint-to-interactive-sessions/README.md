@@ -33,7 +33,7 @@ No console hunting for a feature that was removed in 2023. No 24/7 endpoint bill
 
 ## Important constraints — read before running
 
-1. **Interactive sessions cannot run Glue 0.9/1.0.** If the dev endpoint's code uses HDFS paths, YARN configs, Python 2 syntax, or Spark 2.x semantics, the code MUST be upgraded to Glue 3.0+ first via the [`glue-v09-v1-migration`](../glue-v09-v1-migration/) skill before provisioning the session.
+1. **Interactive sessions cannot run Glue 0.9/1.0.** If the dev endpoint's code uses HDFS paths, YARN configs, Python 2 syntax, or Spark 2.x semantics, the code MUST be upgraded via the [`glue-v09-v1-migration`](../glue-v09-v1-migration/) skill before provisioning the session.
 
 2. **Two IAM principals.** The runtime role (passed to `CreateSession`) is not enough. The client principal (the user/role calling the API or running the notebook) ALSO needs session API permissions plus `iam:PassRole` on the runtime role. Missing `iam:PassRole` on the client is the #1 setup failure.
 
