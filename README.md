@@ -220,6 +220,20 @@ You can find the AWS Glue open-source Python libraries in a separate repository 
 
    This command line utility helps you to identify the target Glue jobs which will be deprecated per [AWS Glue version support policy](https://docs.aws.amazon.com/glue/latest/dg/glue-version-support-policy.html).
 
+## Agent Skills
+
+[Agent skills](utilities/skills/) are markdown-based instructions that an AI coding assistant (e.g. Claude Code) can load to perform structured Glue operations on your behalf — running AWS API calls, fixing failures, and iterating to a working end state.
+
+These skills are provided as-is as sample code (not a managed service) and are meant to be **customized to your own requirements** — each skill's `SKILL.md` is a starting template you can edit for your jobs, IAM boundaries, and change-management rules. Customizing the skill is a shared responsibility: edits you make to `SKILL.md` are yours to maintain.
+
+ - [Glue 0.9/1.0 → 4.0 Job Migration](utilities/skills/glue-v09-v1-migration/README.md)
+
+   Upgrades AWS Glue 0.9 and 1.0 ETL jobs to Glue 4.0 via a run → diagnose → fix → rerun loop. Backs up the original job definition, applies known-issue fixes (Python 2 syntax, Log4j 1.x config, Spark 2→3 timestamp parsing, etc.), and validates with a successful run before finalizing.
+
+ - [Glue Dev Endpoint → Interactive Sessions Migration](utilities/skills/migrate-glue-devendpoint-to-interactive-sessions/README.md)
+
+   Migrates deprecated Glue 0.9/1.0 dev endpoints to Glue 4.0 interactive sessions following the official AWS migration checklist. Backs up the dev endpoint configuration, maps workers/arguments/libraries to a session, and validates with a test statement.
+
 ## Glue Custom Connectors
 AWS Glue provides [built-in support](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-connect.html) for the most commonly used data stores such as Amazon Redshift, MySQL, MongoDB. Powered by Glue ETL Custom Connector, you can subscribe a third-party connector from AWS Marketplace or build your own connector to connect to data stores that are not natively supported.
 

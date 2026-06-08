@@ -2,7 +2,32 @@
 
 > **Skill file:** [`SKILL.md`](./SKILL.md) — the agent reads this file when invoked. The README is for humans; `SKILL.md` is the contract the AI agent follows.
 
+> **Customize for your environment — shared responsibility.** `SKILL.md` is a starting template, provided as-is as sample code under the repository license — not a managed service. You are encouraged to **customize it to your own requirements**: access-method routing, IAM boundaries, change-management rules, session sizing and idle timeout, validation criteria, and any organization-specific constraints. Any edits you make to `SKILL.md` are yours to own and maintain.
+
 An AI-agent skill that moves a developer off a legacy AWS Glue **development endpoint** (Glue 0.9/1.0, no console since March 2023, billed continuously, 10–15 min startup) onto a Glue **interactive session** (Glue 2.0+, sub-minute startup, configurable idle timeout, console support). It follows the [official AWS migration checklist](https://docs.aws.amazon.com/glue/latest/dg/development-migration-checklist.html).
+
+---
+
+## Quick start
+
+**1. Install the skill** — clone this repo so your AI agent can read the skill file from disk:
+
+```bash
+git clone https://github.com/aws-samples/aws-glue-samples.git
+```
+
+**2. Invoke the skill** — paste the prompt below into Claude Code, Kiro CLI, or Codex CLI, substituting your dev endpoint name, region, and AWS profile:
+
+```text
+use the skill at <local-path>/aws-glue-samples/utilities/skills/migrate-glue-devendpoint-to-interactive-sessions/SKILL.md
+to migrate my Glue dev endpoint <dev-endpoint-name> in <region> to an interactive session.
+use aws profile <profile-name> for any aws call.
+```
+
+The agent will inventory the dev endpoint, route on access method (notebook / IDE / REPL / SSH), provision an equivalent interactive session, validate equivalence with your own code, and — only on your explicit confirmation — back up the dev endpoint definition to S3 and delete it.
+
+**Headless / batch usage** is in [Batch / headless migration at scale](#batch--headless-migration-at-scale) below.
+**IAM permissions, pre-flight checklist, and the full constraint list** are in [Important constraints](#important-constraints--read-before-running) and [Prerequisites](#prerequisites).
 
 ---
 
