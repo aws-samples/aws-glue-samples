@@ -2,7 +2,32 @@
 
 > **Skill file:** [`SKILL.md`](./SKILL.md) — the agent reads this file when invoked. The README is for humans; `SKILL.md` is the contract the AI agent follows.
 
+> **Customize for your environment — shared responsibility.** `SKILL.md` is a starting template, provided as-is as sample code under the repository license — not a managed service. You are encouraged to **customize it to your own requirements**: job-specific logic, IAM boundaries, change-management rules, worker sizing, validation criteria, and any organization-specific constraints. Any edits you make to `SKILL.md` are yours to own and maintain. For issues with the AWS Glue *service* encountered during a migration, open a normal AWS Support case.
+
 An AI-agent skill that upgrades an AWS Glue ETL job from **GlueVersion 0.9 or 1.0** to **GlueVersion 4.0** using a `run → fail → fix → rerun` loop. The skill reads the existing job, runs it on 4.0, classifies failures against a 14-category breaking-change catalogue, patches the script or configuration, and iterates up to 5 attempts. If it cannot converge, it reverts the job and the script to their original state.
+
+---
+
+## Quick start
+
+**1. Install the skill** — clone this repo so your AI agent can read the skill file from disk:
+
+```bash
+git clone https://github.com/aws-samples/aws-glue-samples.git
+```
+
+**2. Invoke the skill** — paste the prompt below into Claude Code, Kiro CLI, or Codex CLI, substituting your job name, region, and AWS profile:
+
+```text
+use the skill at <local-path>/aws-glue-samples/utilities/skills/glue-v09-v1-migration/SKILL.md
+to upgrade my Glue 0.9 job <job-name> in <region>.
+use aws profile <profile-name> for any aws call.
+```
+
+Substitute `Glue 1.0` and the matching job name for 1.0 upgrades. The agent will back up the script and job definition, apply preflight fixes (worker type, Python version, removed YARN args), run the job on Glue 4.0, classify any failure against the [14-category breaking-change catalogue](./references/migration-notes.md), patch, and iterate up to 5 fix attempts before either succeeding or reverting to the original state.
+
+**Headless / batch usage** is in [Batch / headless upgrade at scale](#batch--headless-upgrade-at-scale) below.
+**IAM permissions, pre-flight checklist, and the full constraint list** are in [Important constraints](#important-constraints--read-before-running) and [Prerequisites](#prerequisites).
 
 ---
 
@@ -70,9 +95,9 @@ git clone https://github.com/aws-samples/aws-glue-samples.git
 Then point your AI agent (Claude Code, Kiro CLI, Codex CLI) at the skill file:
 
 ```text
-use the skill at <local-path>/aws-glue-samples/utilities/skills/glue-09-10-migration/SKILL.md
+use the skill at <local-path>/aws-glue-samples/utilities/skills/glue-v09-v1-migration/SKILL.md
 to upgrade my Glue 0.9 job <job-name> in <region>.
-use aws profile <profile-name> for any aws call
+use aws profile <profile-name> for any aws call.
 ```
 
 Substitute `Glue 1.0` and the matching job name for 1.0 upgrades.
@@ -202,7 +227,7 @@ The skill is per-job and stateless — read the job, upgrade it, exit — so it 
 
 Claude Code supports multi-agent [workflows](https://code.claude.com/docs/en/workflows) where you describe the fan-out pattern and it manages concurrency. Example prompt:
 
-> *"Use a workflow to upgrade all Glue jobs in account 123456789012 that are on version 0.9 or 1.0. Use the glue-09-10-migration skill for each. Run up to 10 in parallel."*
+> *"Use a workflow to upgrade all Glue jobs in account 123456789012 that are on version 0.9 or 1.0. Use the glue-v09-v1-migration skill for each. Run up to 10 in parallel."*
 
 Claude lists matching jobs via `glue:ListJobs`, filters by `GlueVersion`, spawns parallel sub-agents, and collects a per-job summary. No wrapper script needed.
 
@@ -210,14 +235,14 @@ Claude lists matching jobs via `glue:ListJobs`, filters by `GlueVersion`, spawns
 
 ```bash
 # Claude Code (headless)
-claude --print "Upgrade Glue job 'my-etl-job' in us-east-1 to Glue 4.0 using the glue-09-10-migration skill"
+claude --print "Upgrade Glue job 'my-etl-job' in us-east-1 to Glue 4.0 using the glue-v09-v1-migration skill"
 
 # Kiro CLI (headless)
-kiro-cli chat "Upgrade Glue job 'my-etl-job' in us-east-1 to Glue 4.0 using the glue-09-10-migration skill" \
+kiro-cli chat "Upgrade Glue job 'my-etl-job' in us-east-1 to Glue 4.0 using the glue-v09-v1-migration skill" \
   --no-interactive --trust-all-tools
 
 # Codex CLI (headless)
-codex "Upgrade Glue job 'my-etl-job' in us-east-1 to Glue 4.0 using the glue-09-10-migration skill"
+codex "Upgrade Glue job 'my-etl-job' in us-east-1 to Glue 4.0 using the glue-v09-v1-migration skill"
 ```
 
 Sessions run independently — one job's failure does not block others. Each session emits a structured result block that can be collected and reviewed.
