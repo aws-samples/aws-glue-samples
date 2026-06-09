@@ -178,7 +178,7 @@ def search_asset_id(datazone, dzDomain, tableName, schemaName, maxResults: int) 
                 forms_dict['RedshiftTableForm']['schemaName'] == schemaName and
                 forms_dict['RedshiftTableForm']['tableName'] == tableName) or \
                 ('GlueTableForm' in forms_dict and
-                f"table/{schemaName}/{tableName}" in forms_dict['GlueTableForm']['tableArn']):
+                f"{schemaName}/{tableName}" in forms_dict['GlueTableForm']['tableArn']):
                 entity_identifier=item['assetListing']['entityId']
                 get_logger().info(f"DZ Asset Id: {entity_identifier_list}")
                 entity_identifier_list.append(entity_identifier)
