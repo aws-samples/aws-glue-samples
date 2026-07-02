@@ -44,5 +44,13 @@
         "isOptional": true,
         "description": "The Maximum number of DataZone asset to be return if matching table and schema are found default is 5"
       }
+      ,
+      {
+        "name": "owningProjectId",
+        "displayName": "Id of the DataZone project that owns the target asset",
+        "type": "str",
+        "isOptional": true,
+        "description": "Optional. When set, only the asset owned by this project is used. Set this when the same schema/table is published under more than one project to avoid posting to an asset owned by a project you are not a member of."
+      }
   ]
 }
