@@ -1,0 +1,639 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Real-Time Market Risk Pipeline - AWS Glue 6.0 + Apache Iceberg v3 + Spark RTM.
+  Deploys a provisioned Amazon MSK cluster, VPC networking, Glue jobs (producer, RTM alerts, NRT ingestion, batch VaR),
+  and all supporting resources. No Lambda functions - all processing is Glue-based.
+
+# ==============================================================================
+# PARAMETERS
+# ==============================================================================
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC for the Amazon MSK cluster. Must have DNS resolution enabled.
+
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: At least 2 subnets in different AZs within the VPC above.
+
+  SecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Create a dedicated security group that allows all inbound TCP from itself (self-referencing rule). Glue requires all ports open between workers. Do not use the default VPC security group as it allows broad inbound access.
+
+  RouteTableId:
+    Type: String
+    Description: Main route table ID for the VPC (used for S3 gateway endpoint). Find it in VPC Console → Route Tables → Main=Yes.
+
+# ==============================================================================
+# RESOURCES
+# ==============================================================================
+Resources:
+
+  # ============================================================
+  # S3 Bucket - Iceberg warehouse, scripts, checkpoints
+  # ============================================================
+  DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'glue6-rtm-variant-${AWS::AccountId}-${AWS::Region}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  # ============================================================
+  # IAM Role - shared by all Glue jobs
+  # ============================================================
+  GlueJobRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: ec2 network-interface and ec2 describe actions do not support resource-level permissions and require Resource '*'
+    Properties:
+      RoleName: !Sub 'GlueRole-${AWS::AccountId}-glue6b1'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt DataBucket.Arn
+                  - !Sub '${DataBucket.Arn}/*'
+        - PolicyName: MSKAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - kafka-cluster:Connect
+                  - kafka-cluster:DescribeCluster
+                Resource: !Sub 'arn:${AWS::Partition}:kafka:${AWS::Region}:${AWS::AccountId}:cluster/glue6-rtm-variant-${AWS::AccountId}/*'
+              - Effect: Allow
+                Action:
+                  - kafka-cluster:DescribeTopic
+                  - kafka-cluster:CreateTopic
+                  - kafka-cluster:WriteData
+                  - kafka-cluster:ReadData
+                Resource: !Sub 'arn:${AWS::Partition}:kafka:${AWS::Region}:${AWS::AccountId}:topic/glue6-rtm-variant-${AWS::AccountId}/*/*'
+              - Effect: Allow
+                Action:
+                  - kafka-cluster:AlterGroup
+                  - kafka-cluster:DescribeGroup
+                Resource: !Sub 'arn:${AWS::Partition}:kafka:${AWS::Region}:${AWS::AccountId}:group/glue6-rtm-variant-${AWS::AccountId}/*/*'
+        - PolicyName: GlueCatalog
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:GetDatabase
+                  - glue:GetDatabases
+                  - glue:CreateDatabase
+                  - glue:GetTable
+                  - glue:GetTables
+                  - glue:CreateTable
+                  - glue:UpdateTable
+                  - glue:DeleteTable
+                  - glue:GetPartitions
+                Resource:
+                  - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:catalog'
+                  - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:database/risk_analytics_*'
+                  - !Sub 'arn:aws:glue:${AWS::Region}:${AWS::AccountId}:table/risk_analytics_*/*'
+        - PolicyName: PassRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/GlueRole-${AWS::AccountId}-glue6b1'
+        - PolicyName: CloudWatchLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+        - PolicyName: EC2NetworkInterface
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DeleteNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DescribeSecurityGroups
+                  - ec2:DescribeSubnets
+                  - ec2:DescribeVpcs
+                  - ec2:DescribeVpcEndpoints
+                  - ec2:DescribeRouteTables
+                # EC2 ENI actions require Resource: '*' (ENI ARNs are not predictable)
+                Resource: '*'
+
+  # ============================================================
+  # MSK Cluster (Provisioned, IAM auth, 2 brokers)
+  # ============================================================
+  MSKCluster:
+    Type: AWS::MSK::Cluster
+    Properties:
+      ClusterName: !Sub 'glue6-rtm-variant-${AWS::AccountId}'
+      KafkaVersion: '3.6.0'
+      NumberOfBrokerNodes: 2
+      BrokerNodeGroupInfo:
+        InstanceType: kafka.m5.large
+        ClientSubnets: !Ref SubnetIds
+        SecurityGroups:
+          - !Ref SecurityGroupId
+        StorageInfo:
+          EBSStorageInfo:
+            VolumeSize: 50
+      ClientAuthentication:
+        Sasl:
+          Iam:
+            Enabled: true
+        Unauthenticated:
+          Enabled: false
+      EncryptionInfo:
+        EncryptionInTransit:
+          ClientBroker: TLS
+          InCluster: true
+
+  # ============================================================
+  # VPC Endpoint - S3 Gateway (Glue jobs in VPC need this)
+  # ============================================================
+  S3VpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref RouteTableId
+
+  # ============================================================
+  # VPC Endpoint - Glue Interface (Glue jobs need Catalog access)
+  # ============================================================
+  GlueVpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref VpcId
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.glue'
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Select
+          - 0
+          - !Ref SubnetIds
+      SecurityGroupIds:
+        - !Ref SecurityGroupId
+      PrivateDnsEnabled: true
+
+  # ============================================================
+  # Helper Lambda - retrieves MSK bootstrap + route table
+  # (Single helper for custom resources, not part of pipeline)
+  # ============================================================
+  HelperRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: ec2:DescribeSubnets does not support resource-level permissions and requires Resource '*'
+    Properties:
+      RoleName: !Sub 'glue6-rtm-variant-helper-${AWS::Region}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: HelperPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - kafka:GetBootstrapBrokers
+                  - kafka:DescribeCluster
+                  - kafka:CreateTopic
+                  - kafka-cluster:Connect
+                Resource: !Sub 'arn:${AWS::Partition}:kafka:${AWS::Region}:${AWS::AccountId}:cluster/glue6-rtm-variant-${AWS::AccountId}/*'
+              - Effect: Allow
+                Action:
+                  - kafka-cluster:CreateTopic
+                  - kafka-cluster:DescribeTopic
+                Resource: !Sub 'arn:${AWS::Partition}:kafka:${AWS::Region}:${AWS::AccountId}:topic/glue6-rtm-variant-${AWS::AccountId}/*/*'
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeSubnets
+                # DescribeSubnets does not support resource-level permissions
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:s3:::glue6-rtm-variant-${AWS::AccountId}-${AWS::Region}'
+                  - !Sub 'arn:${AWS::Partition}:s3:::glue6-rtm-variant-${AWS::AccountId}-${AWS::Region}/*'
+
+  HelperFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'glue6-rtm-variant-helper-${AWS::Region}'
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt HelperRole.Arn
+      Timeout: 60
+      Code:
+        ZipFile: |
+          import boto3, json
+          from urllib.request import urlopen, Request
+
+          def send_cfn(event, context, status, data={}):
+              body = json.dumps({
+                  "Status": status, "Reason": json.dumps(data),
+                  "PhysicalResourceId": context.log_stream_name,
+                  "StackId": event["StackId"], "RequestId": event["RequestId"],
+                  "LogicalResourceId": event["LogicalResourceId"], "Data": data
+              })
+              req = Request(event["ResponseURL"], data=body.encode(), headers={"Content-Type": ""}, method="PUT")
+              urlopen(req)
+
+          def handler(event, context):
+              try:
+                  if event['RequestType'] == 'Delete':
+                      send_cfn(event, context, "SUCCESS")
+                      return
+                  action = event['ResourceProperties'].get('Action', 'GetBootstrapBrokers')
+                  if action == 'GetBootstrapBrokers':
+                      cluster_arn = event['ResourceProperties']['ClusterArn']
+                      client = boto3.client('kafka')
+                      resp = client.get_bootstrap_brokers(ClusterArn=cluster_arn)
+                      brokers = resp.get('BootstrapBrokerStringSaslIam', '')
+                      send_cfn(event, context, "SUCCESS", {'BootstrapServers': brokers})
+                  elif action == 'GetSubnetAZ':
+                      subnet_id = event['ResourceProperties']['SubnetId']
+                      ec2 = boto3.client('ec2')
+                      resp = ec2.describe_subnets(SubnetIds=[subnet_id])
+                      az = resp['Subnets'][0]['AvailabilityZone']
+                      send_cfn(event, context, "SUCCESS", {'AvailabilityZone': az})
+                  elif action == 'CreateTopics':
+                      cluster_arn = event['ResourceProperties']['ClusterArn']
+                      topics = event['ResourceProperties']['Topics']
+                      client = boto3.client('kafka')
+                      created = []
+                      for topic in topics:
+                          try:
+                              client.create_topic(
+                                  ClusterArn=cluster_arn,
+                                  TopicName=topic['Name'],
+                                  PartitionCount=int(topic.get('Partitions', 2)),
+                                  ReplicationFactor=int(topic.get('ReplicationFactor', 2))
+                              )
+                              created.append(topic['Name'])
+                          except client.exceptions.ConflictException:
+                              created.append(f"{topic['Name']} (exists)")
+                      send_cfn(event, context, "SUCCESS", {'Topics': ', '.join(created)})
+                  else:
+                      send_cfn(event, context, "FAILED", {'Error': f'Unknown action: {action}'})
+              except Exception as e:
+                  send_cfn(event, context, "FAILED", {'Error': str(e)})
+
+  # ============================================================
+  # Custom Resource - Get MSK Bootstrap Brokers (IAM endpoint)
+  # ============================================================
+  MSKBootstrap:
+    Type: Custom::MSKBootstrap
+    DependsOn: MSKCluster
+    Properties:
+      ServiceToken: !GetAtt HelperFunction.Arn
+      Action: GetBootstrapBrokers
+      ClusterArn: !Ref MSKCluster
+
+  # ============================================================
+  # Custom Resource - Get AZ for first subnet
+  # ============================================================
+  SubnetAZ:
+    Type: Custom::SubnetAZ
+    Properties:
+      ServiceToken: !GetAtt HelperFunction.Arn
+      Action: GetSubnetAZ
+      SubnetId: !Select
+        - 0
+        - !Ref SubnetIds
+
+  # ============================================================
+  # Custom Resource - Create Kafka Topics
+  # ============================================================
+  MSKTopics:
+    Type: Custom::MSKTopics
+    DependsOn: MSKCluster
+    Properties:
+      ServiceToken: !GetAtt HelperFunction.Arn
+      Action: CreateTopics
+      ClusterArn: !Ref MSKCluster
+      Topics:
+        - Name: trade-risk-vectors
+          Partitions: 2
+          ReplicationFactor: 2
+        - Name: trade-alerts
+          Partitions: 2
+          ReplicationFactor: 2
+
+  # ============================================================
+  # Script Uploader - downloads scripts from GitHub into DataBucket
+  # ============================================================
+  ScriptUploaderFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: DataBucket
+    Properties:
+      FunctionName: !Sub 'glue6-rtm-variant-script-uploader-${AWS::Region}'
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt HelperRole.Arn
+      Timeout: 120
+      MemorySize: 256
+      Code:
+        ZipFile: |
+          import boto3, json
+          from urllib.request import urlopen, Request
+
+          GITHUB_BASE = "https://raw.githubusercontent.com/aws-samples/aws-glue-samples/master/examples/glue6-rtm-iceberg-v3-pipeline/scripts"
+          SCRIPTS = [
+              "create_topics.py",
+              "producer.py",
+              "rtm_alerts.scala",
+              "nrt_ingestion.py",
+              "batch_var.py"
+          ]
+
+          def send_cfn(event, context, status, data={}):
+              body = json.dumps({
+                  "Status": status, "Reason": json.dumps(data),
+                  "PhysicalResourceId": context.log_stream_name,
+                  "StackId": event["StackId"], "RequestId": event["RequestId"],
+                  "LogicalResourceId": event["LogicalResourceId"], "Data": data
+              })
+              req = Request(event["ResponseURL"], data=body.encode(), headers={"Content-Type": ""}, method="PUT")
+              urlopen(req)
+
+          def handler(event, context):
+              bucket = event['ResourceProperties']['Bucket']
+              s3 = boto3.client('s3')
+              try:
+                  if event['RequestType'] == 'Delete':
+                      # Empty the entire bucket so CFN can delete it
+                      paginator = s3.get_paginator('list_objects_v2')
+                      for page in paginator.paginate(Bucket=bucket):
+                          objects = [{'Key': obj['Key']} for obj in page.get('Contents', [])]
+                          if objects:
+                              s3.delete_objects(Bucket=bucket, Delete={'Objects': objects})
+                      send_cfn(event, context, "SUCCESS", {'Message': 'Bucket emptied'})
+                      return
+                  for script in SCRIPTS:
+                      url = f"{GITHUB_BASE}/{script}"
+                      content = urlopen(url).read()
+                      s3.put_object(Bucket=bucket, Key=f"scripts/{script}", Body=content)
+                  send_cfn(event, context, "SUCCESS", {'Message': f'Uploaded {len(SCRIPTS)} scripts from GitHub'})
+              except Exception as e:
+                  send_cfn(event, context, "FAILED", {'Error': str(e)[:500]})
+
+  ScriptUpload:
+    Type: Custom::ScriptUpload
+    DependsOn:
+      - DataBucket
+      - ScriptUploaderFunction
+    Properties:
+      ServiceToken: !GetAtt ScriptUploaderFunction.Arn
+      Bucket: !Sub 'glue6-rtm-variant-${AWS::AccountId}-${AWS::Region}'
+
+  # ============================================================
+  # Glue Database
+  # ============================================================
+  GlueDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: !Sub 'risk_analytics_${AWS::AccountId}_glue6b1'
+        Description: 'Glue 6.0 Real-Time Market Risk Pipeline - Iceberg v3 tables'
+        LocationUri: !Sub 's3://glue6-rtm-variant-${AWS::AccountId}-${AWS::Region}/warehouse/'
+
+  # ============================================================
+  # Glue Network Connection (required for MSK VPC access)
+  # ============================================================
+  GlueConnection:
+    Type: AWS::Glue::Connection
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      ConnectionInput:
+        Name: !Sub 'connection-${AWS::AccountId}-glue6b1'
+        ConnectionType: NETWORK
+        PhysicalConnectionRequirements:
+          SubnetId: !Select
+            - 0
+            - !Ref SubnetIds
+          SecurityGroupIdList:
+            - !Ref SecurityGroupId
+          AvailabilityZone: !GetAtt SubnetAZ.AvailabilityZone
+
+  # ============================================================
+  # Glue Job: Topic Creator (helper - runs once)
+  # ============================================================
+  # ============================================================
+  # Glue Job: Trade Producer (generates trade events → MSK)
+  # ============================================================
+  ProducerJob:
+    Type: AWS::Glue::Job
+    DependsOn:
+      - MSKBootstrap
+      - GlueConnection
+      - ScriptUpload
+    Properties:
+      Name: !Sub 'producer-${AWS::AccountId}-glue6b1'
+      Role: !GetAtt GlueJobRole.Arn
+      GlueVersion: '6.0'
+      Command:
+        Name: gluestreaming
+        ScriptLocation: !Sub 's3://${DataBucket}/scripts/producer.py'
+        PythonVersion: '3'
+      DefaultArguments:
+        '--BOOTSTRAP_SERVERS': !GetAtt MSKBootstrap.BootstrapServers
+        '--datalake-formats': iceberg
+        '--enable-glue-datacatalog': 'true'
+      Connections:
+        Connections:
+          - !Sub 'connection-${AWS::AccountId}-glue6b1'
+      WorkerType: G.1X
+      NumberOfWorkers: 2
+
+  # ============================================================
+  # Glue Job: RTM Alerts (Scala - Real-Time Mode, Kafka→Kafka)
+  # ============================================================
+  RTMAlertJob:
+    Type: AWS::Glue::Job
+    DependsOn:
+      - MSKBootstrap
+      - GlueConnection
+      - ScriptUpload
+    Properties:
+      Name: !Sub 'rtm-alerts-${AWS::AccountId}-glue6b1'
+      Role: !GetAtt GlueJobRole.Arn
+      GlueVersion: '6.0'
+      Command:
+        Name: gluestreaming
+        ScriptLocation: !Sub 's3://${DataBucket}/scripts/rtm_alerts.scala'
+      DefaultArguments:
+        '--job-language': scala
+        '--class': RTMAlerts
+        '--enable-real-time-mode': 'true'
+        '--BOOTSTRAP_SERVERS': !GetAtt MSKBootstrap.BootstrapServers
+        '--CHECKPOINT_PATH': !Sub 's3://glue6-rtm-variant-${AWS::AccountId}-${AWS::Region}/checkpoints'
+      Connections:
+        Connections:
+          - !Sub 'connection-${AWS::AccountId}-glue6b1'
+      WorkerType: G.1X
+      NumberOfWorkers: 2
+
+  # ============================================================
+  # Glue Job: NRT Ingestion (PySpark - Micro-batch, Kafka→Iceberg v3)
+  # ============================================================
+  NRTIngestionJob:
+    Type: AWS::Glue::Job
+    DependsOn:
+      - MSKBootstrap
+      - GlueConnection
+      - GlueDatabase
+      - ScriptUpload
+    Properties:
+      Name: !Sub 'nrt-ingestion-${AWS::AccountId}-glue6b1'
+      Role: !GetAtt GlueJobRole.Arn
+      GlueVersion: '6.0'
+      Command:
+        Name: gluestreaming
+        ScriptLocation: !Sub 's3://${DataBucket}/scripts/nrt_ingestion.py'
+        PythonVersion: '3'
+      DefaultArguments:
+        '--BOOTSTRAP_SERVERS': !GetAtt MSKBootstrap.BootstrapServers
+        '--DATABASE_NAME': !Sub 'risk_analytics_${AWS::AccountId}_glue6b1'
+        '--CHECKPOINT_PATH': !Sub 's3://glue6-rtm-variant-${AWS::AccountId}-${AWS::Region}/checkpoints'
+        '--datalake-formats': iceberg
+        '--enable-glue-datacatalog': 'true'
+        '--enable-auto-scaling': 'true'
+        '--enable-metrics': 'true'
+        '--enable-continuous-cloudwatch-log': 'true'
+        '--conf': !Sub >-
+          spark.sql.catalog.glue_catalog=org.apache.iceberg.spark.SparkCatalog
+          --conf spark.sql.catalog.glue_catalog.warehouse=s3://glue6-rtm-variant-${AWS::AccountId}-${AWS::Region}/warehouse/
+          --conf spark.sql.catalog.glue_catalog.catalog-impl=org.apache.iceberg.aws.glue.GlueCatalog
+          --conf spark.sql.catalog.glue_catalog.io-impl=org.apache.iceberg.aws.s3.S3FileIO
+      Connections:
+        Connections:
+          - !Sub 'connection-${AWS::AccountId}-glue6b1'
+      WorkerType: G.1X
+      NumberOfWorkers: 2
+
+  # ============================================================
+  # Glue Job: Batch VaR (PySpark - Arrow UDF, Iceberg→Iceberg)
+  # ============================================================
+  BatchVaRJob:
+    Type: AWS::Glue::Job
+    DependsOn:
+      - GlueDatabase
+      - ScriptUpload
+    Properties:
+      Name: !Sub 'batch-var-${AWS::AccountId}-glue6b1'
+      Role: !GetAtt GlueJobRole.Arn
+      GlueVersion: '6.0'
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub 's3://${DataBucket}/scripts/batch_var.py'
+        PythonVersion: '3'
+      DefaultArguments:
+        '--DATABASE_NAME': !Sub 'risk_analytics_${AWS::AccountId}_glue6b1'
+        '--datalake-formats': iceberg
+        '--enable-glue-datacatalog': 'true'
+        '--enable-metrics': 'true'
+        '--conf': !Sub >-
+          spark.sql.catalog.glue_catalog=org.apache.iceberg.spark.SparkCatalog
+          --conf spark.sql.catalog.glue_catalog.warehouse=s3://glue6-rtm-variant-${AWS::AccountId}-${AWS::Region}/warehouse/
+          --conf spark.sql.catalog.glue_catalog.catalog-impl=org.apache.iceberg.aws.glue.GlueCatalog
+          --conf spark.sql.catalog.glue_catalog.io-impl=org.apache.iceberg.aws.s3.S3FileIO
+      WorkerType: G.1X
+      NumberOfWorkers: 4
+
+# ==============================================================================
+# OUTPUTS
+# ==============================================================================
+Outputs:
+  BucketName:
+    Description: S3 bucket for Iceberg data, scripts, and checkpoints
+    Value: !Ref DataBucket
+
+  MSKClusterArn:
+    Description: MSK cluster ARN
+    Value: !Ref MSKCluster
+
+  BootstrapServers:
+    Description: MSK IAM bootstrap servers (use this in Glue job arguments)
+    Value: !GetAtt MSKBootstrap.BootstrapServers
+
+  GlueDatabaseName:
+    Description: Glue Data Catalog database for Iceberg v3 tables
+    Value: !Sub 'risk_analytics_${AWS::AccountId}_glue6b1'
+
+  GlueRoleArn:
+    Description: IAM role used by all Glue jobs
+    Value: !GetAtt GlueJobRole.Arn
+
+  ProducerJobName:
+    Description: Trade event producer (run AFTER topics + consumers are started)
+    Value: !Sub 'producer-${AWS::AccountId}-glue6b1'
+
+  RTMAlertJobName:
+    Description: Real-Time Mode alerts job (Scala, Kafka→Kafka)
+    Value: !Sub 'rtm-alerts-${AWS::AccountId}-glue6b1'
+
+  NRTIngestionJobName:
+    Description: Near-real-time ingestion job (PySpark, Kafka→Iceberg v3)
+    Value: !Sub 'nrt-ingestion-${AWS::AccountId}-glue6b1'
+
+  BatchVaRJobName:
+    Description: Batch VaR computation (PySpark, Arrow UDF, Iceberg→Iceberg)
+    Value: !Sub 'batch-var-${AWS::AccountId}-glue6b1'
+
+  RunOrder:
+    Description: Execution order for the pipeline
+    Value: '1) rtm-alerts + nrt-ingestion (parallel) → 2) producer → 3) batch-var (after producer finishes)'

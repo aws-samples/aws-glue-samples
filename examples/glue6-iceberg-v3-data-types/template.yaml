@@ -1,0 +1,256 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Iceberg v3 Data Types Demo - AWS Glue 6.0.
+  Demonstrates GEOMETRY, GEOGRAPHY, TIMESTAMP_NTZ(9), VARIANT, and DEFAULT values
+  in a single Iceberg v3 table using a fleet telemetry use case.
+
+Resources:
+
+  # ============================================================
+  # S3 Bucket
+  # ============================================================
+  DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'glue6-iceberg-v3-types-${AWS::AccountId}-${AWS::Region}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  # ============================================================
+  # IAM Role
+  # ============================================================
+  GlueJobRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'glue6-iceberg-v3-types-role-${AWS::AccountId}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt DataBucket.Arn
+                  - !Sub '${DataBucket.Arn}/*'
+        - PolicyName: GlueCatalog
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:GetDatabase
+                  - glue:GetDatabases
+                  - glue:CreateDatabase
+                  - glue:GetTable
+                  - glue:GetTables
+                  - glue:CreateTable
+                  - glue:UpdateTable
+                  - glue:DeleteTable
+                  - glue:GetPartitions
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog'
+                  - !Sub 'arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/fleet_monitoring_${AWS::AccountId}'
+                  - !Sub 'arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/fleet_monitoring_${AWS::AccountId}/*'
+        - PolicyName: CloudWatchLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*'
+
+  # ============================================================
+  # Script Uploader Lambda
+  # ============================================================
+  HelperRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'glue6-iceberg-v3-types-helper-${AWS::AccountId}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3Upload
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt DataBucket.Arn
+                  - !Sub '${DataBucket.Arn}/*'
+
+  ScriptUploaderFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: DataBucket
+    Properties:
+      FunctionName: !Sub 'glue6-iceberg-v3-types-uploader-${AWS::AccountId}'
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt HelperRole.Arn
+      Timeout: 120
+      MemorySize: 256
+      Code:
+        ZipFile: |
+          import boto3, json
+          from urllib.request import urlopen, Request
+
+          GITHUB_BASE = "https://raw.githubusercontent.com/aws-samples/aws-glue-samples/master/examples/glue6-iceberg-v3-data-types/scripts"
+          SCRIPTS = ["fleet_telemetry.py", "fleet_queries.py"]
+
+          def send_cfn(event, context, status, data={}):
+              body = json.dumps({
+                  "Status": status, "Reason": json.dumps(data),
+                  "PhysicalResourceId": context.log_stream_name,
+                  "StackId": event["StackId"], "RequestId": event["RequestId"],
+                  "LogicalResourceId": event["LogicalResourceId"], "Data": data
+              })
+              req = Request(event["ResponseURL"], data=body.encode(), headers={"Content-Type": ""}, method="PUT")
+              urlopen(req)
+
+          def handler(event, context):
+              bucket = event['ResourceProperties']['Bucket']
+              s3 = boto3.client('s3')
+              try:
+                  if event['RequestType'] == 'Delete':
+                      paginator = s3.get_paginator('list_objects_v2')
+                      for page in paginator.paginate(Bucket=bucket):
+                          objects = [{'Key': obj['Key']} for obj in page.get('Contents', [])]
+                          if objects:
+                              s3.delete_objects(Bucket=bucket, Delete={'Objects': objects})
+                      send_cfn(event, context, "SUCCESS", {'Message': 'Bucket emptied'})
+                      return
+                  for script in SCRIPTS:
+                      url = f"{GITHUB_BASE}/{script}"
+                      content = urlopen(url).read()
+                      s3.put_object(Bucket=bucket, Key=f"scripts/{script}", Body=content)
+                  send_cfn(event, context, "SUCCESS", {'Message': f'Uploaded {len(SCRIPTS)} scripts'})
+              except Exception as e:
+                  send_cfn(event, context, "FAILED", {'Error': str(e)[:500]})
+
+  ScriptUpload:
+    Type: Custom::ScriptUpload
+    DependsOn:
+      - DataBucket
+      - ScriptUploaderFunction
+    Properties:
+      ServiceToken: !GetAtt ScriptUploaderFunction.Arn
+      Bucket: !Sub 'glue6-iceberg-v3-types-${AWS::AccountId}-${AWS::Region}'
+
+  # ============================================================
+  # Glue Database
+  # ============================================================
+  GlueDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: !Sub 'fleet_monitoring_${AWS::AccountId}'
+        Description: 'Iceberg v3 Data Types Demo - Fleet Telemetry'
+        LocationUri: !Sub 's3://glue6-iceberg-v3-types-${AWS::AccountId}-${AWS::Region}/warehouse/'
+
+  # ============================================================
+  # Glue Job: Ingestion (creates table + inserts sample data)
+  # ============================================================
+  IngestionJob:
+    Type: AWS::Glue::Job
+    DependsOn: ScriptUpload
+    Properties:
+      Name: !Sub 'fleet-telemetry-ingest-${AWS::AccountId}'
+      Role: !GetAtt GlueJobRole.Arn
+      GlueVersion: '6.0'
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub 's3://glue6-iceberg-v3-types-${AWS::AccountId}-${AWS::Region}/scripts/fleet_telemetry.py'
+        PythonVersion: '3'
+      DefaultArguments:
+        '--conf': 'spark.sql.geospatial.enabled=true'
+        '--datalake-formats': iceberg
+
+        '--BUCKET': !Sub 'glue6-iceberg-v3-types-${AWS::AccountId}-${AWS::Region}'
+        '--DATABASE': !Sub 'fleet_monitoring_${AWS::AccountId}'
+      WorkerType: G.1X
+      NumberOfWorkers: 2
+
+  # ============================================================
+  # Glue Job: Queries (demonstrates all 4 data types)
+  # ============================================================
+  QueryJob:
+    Type: AWS::Glue::Job
+    DependsOn: ScriptUpload
+    Properties:
+      Name: !Sub 'fleet-telemetry-queries-${AWS::AccountId}'
+      Role: !GetAtt GlueJobRole.Arn
+      GlueVersion: '6.0'
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub 's3://glue6-iceberg-v3-types-${AWS::AccountId}-${AWS::Region}/scripts/fleet_queries.py'
+        PythonVersion: '3'
+      DefaultArguments:
+        '--conf': 'spark.sql.geospatial.enabled=true'
+        '--datalake-formats': iceberg
+
+        '--BUCKET': !Sub 'glue6-iceberg-v3-types-${AWS::AccountId}-${AWS::Region}'
+        '--DATABASE': !Sub 'fleet_monitoring_${AWS::AccountId}'
+      WorkerType: G.1X
+      NumberOfWorkers: 2
+
+# ==============================================================================
+# OUTPUTS
+# ==============================================================================
+Outputs:
+  BucketName:
+    Description: S3 bucket for Iceberg data and scripts
+    Value: !Ref DataBucket
+
+  GlueDatabaseName:
+    Description: Glue Data Catalog database
+    Value: !Sub 'fleet_monitoring_${AWS::AccountId}'
+
+  IngestionJobName:
+    Description: Run this FIRST to create the table and insert sample data
+    Value: !Sub 'fleet-telemetry-ingest-${AWS::AccountId}'
+
+  QueryJobName:
+    Description: Run this AFTER ingestion to query all four data types
+    Value: !Sub 'fleet-telemetry-queries-${AWS::AccountId}'
+
+  RunOrder:
+    Description: Execution order
+    Value: '1) fleet-telemetry-ingest (creates table + inserts data) → 2) fleet-telemetry-queries (demonstrates all queries)'

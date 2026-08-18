@@ -1,0 +1,335 @@
+<mxfile host="app.diagrams.net" agent="Kiro" pages="3">
+  <diagram name="Fleet Telemetry - Iceberg v3 Types" id="blog3-arch">
+    <mxGraphModel dx="2792" dy="729" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=16;" value="&lt;b&gt;Fleet Telemetry Pipeline — Iceberg v3 Data Types on AWS Glue 6.0&lt;/b&gt;" vertex="1">
+          <mxGeometry height="30" width="570" x="300" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="van" parent="1" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.iot_car;labelBackgroundColor=none;sketch=0;fillColor=#FF9900;strokeColor=none;fontColor=#232F3E;fontSize=10;" value="&lt;b&gt;Vans&lt;/b&gt;&lt;br&gt;fuel, cargo, engine" vertex="1">
+          <mxGeometry height="60" width="60" x="120" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="drone" parent="1" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.iot_thing_generic;labelBackgroundColor=none;sketch=0;fillColor=#FF9900;strokeColor=none;fontColor=#232F3E;fontSize=10;" value="&lt;b&gt;Drones&lt;/b&gt;&lt;br&gt;battery, altitude, cameras" vertex="1">
+          <mxGeometry height="60" width="60" x="250" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="bike" parent="1" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.iot_bicycle;labelBackgroundColor=none;sketch=0;fillColor=#FF9900;strokeColor=none;fontColor=#232F3E;fontSize=10;" value="&lt;b&gt;Bikes&lt;/b&gt;&lt;br&gt;cadence, heart rate, deliveries" vertex="1">
+          <mxGeometry height="60" width="60" x="380" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="fleet_group" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;dashPattern=5 5;fillColor=none;strokeColor=#FF9900;fontSize=11;verticalAlign=bottom;align=center;" value="Vehicle Fleet (different sensor schemas per type)" vertex="1">
+          <mxGeometry height="100" width="400" x="80" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow1" edge="1" parent="1" source="fleet_group" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="kinesis">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow1_label" connectable="0" parent="arrow1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=9;fontColor=#666666;" value="GPS + timestamps + JSON payloads" vertex="1">
+          <mxGeometry relative="1" x="-0.2" as="geometry" />
+        </mxCell>
+        <mxCell id="kinesis" parent="1" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_streams;labelBackgroundColor=none;sketch=0;fillColor=#8C4FFF;strokeColor=none;fontColor=#232F3E;fontSize=11;" value="&lt;b&gt;Amazon Kinesis&lt;/b&gt;&lt;br&gt;Data Streams" vertex="1">
+          <mxGeometry height="60" width="60" x="250" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow2" edge="1" parent="1" source="kinesis" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" target="glue_job">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="glue_job" parent="1" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.glue;labelBackgroundColor=none;sketch=0;fillColor=#8C4FFF;strokeColor=none;fontColor=#232F3E;fontSize=11;" value="&lt;b&gt;AWS Glue 6.0&lt;/b&gt;&lt;br&gt;Ingestion Job" vertex="1">
+          <mxGeometry height="60" width="60" x="250" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="glue_details" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6F2FF;strokeColor=#147EBA;fontSize=10;align=left;verticalAlign=middle;spacingLeft=8;" value="&lt;b&gt;Type Conversions:&lt;/b&gt;&lt;br&gt;• PARSE_JSON → VARIANT&lt;br&gt;• ST_GeomFromWKB → GEOMETRY&lt;br&gt;• CAST AS TIMESTAMP_NTZ(9)&lt;br&gt;• DEFAULT values auto-applied" vertex="1">
+          <mxGeometry height="90" width="230" x="370" y="315" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow3" edge="1" parent="1" source="glue_job" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" target="iceberg_table">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="iceberg_table" parent="1" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;labelBackgroundColor=none;sketch=0;fillColor=#3F8624;strokeColor=none;fontColor=#232F3E;fontSize=11;" value="&lt;b&gt;Apache Iceberg v3&lt;/b&gt;&lt;br&gt;vehicle_telemetry&lt;br&gt;&lt;font color=&quot;#666666&quot; style=&quot;font-size:9px&quot;&gt;format-version = 3&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="60" x="250" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="schema_box" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#F9A825;fontSize=10;align=left;verticalAlign=middle;spacingLeft=8;" value="&lt;b&gt;Table Columns:&lt;/b&gt;&lt;br&gt;• location &lt;font color=&quot;#E65100&quot;&gt;GEOMETRY(4326)&lt;/font&gt;&lt;br&gt;• event_time &lt;font color=&quot;#1565C0&quot;&gt;TIMESTAMP_NTZ(9)&lt;/font&gt;&lt;br&gt;• sensor_payload &lt;font color=&quot;#6A1B9A&quot;&gt;VARIANT&lt;/font&gt;&lt;br&gt;• vehicle_type &lt;font color=&quot;#2E7D32&quot;&gt;DEFAULT &#39;UNKNOWN&#39;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="250" x="370" y="445" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow4" edge="1" parent="1" source="iceberg_table" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" target="query_job">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="query_job" parent="1" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.glue;labelBackgroundColor=none;sketch=0;fillColor=#8C4FFF;strokeColor=none;fontColor=#232F3E;fontSize=11;" value="&lt;b&gt;AWS Glue 6.0&lt;/b&gt;&lt;br&gt;Query Job" vertex="1">
+          <mxGeometry height="60" width="60" x="250" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="output1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FCE4EC;strokeColor=#C62828;fontSize=10;" value="&lt;b&gt;Geofence Detection&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#E65100&quot;&gt;ST_Intersects()&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="150" x="50" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="output2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;fontSize=10;" value="&lt;b&gt;Event Sequencing&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#1565C0&quot;&gt;ORDER BY nanosecond&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="150" x="220" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="output3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#6A1B9A;fontSize=10;" value="&lt;b&gt;Fleet Analytics&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#6A1B9A&quot;&gt;variant_get() per type&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="150" x="390" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="output4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;fontSize=10;" value="&lt;b&gt;Auto Defaults&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#2E7D32&quot;&gt;DEFAULT values applied&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="150" x="560" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow_o1" edge="1" parent="1" source="query_job" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" target="output1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow_o2" edge="1" parent="1" source="query_job" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" target="output2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow_o3" edge="1" parent="1" source="query_job" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" target="output3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arrow_o4" edge="1" parent="1" source="query_job" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" target="output4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="config_note" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF9C4;strokeColor=#F9A825;fontSize=10;align=center;" value="&lt;b&gt;Config:&lt;/b&gt; spark.sql.geospatial.enabled=true" vertex="1">
+          <mxGeometry height="40" width="220" x="680" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-1" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFF3E0;strokeColor=#E65100;fontStyle=1;fontSize=12;verticalAlign=top;spacingTop=5;align=center;" value="Vehicle Fleet" vertex="1">
+          <mxGeometry height="260" width="160" x="-144.82057542067332" y="290.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-2" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#E65100;fontSize=9;align=center;" value="Vans&#xa;(fuel, cargo, engine)" vertex="1">
+          <mxGeometry height="45" width="120" x="-124.82057542067332" y="330.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-3" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#E65100;fontSize=9;align=center;" value="Drones&#xa;(battery, altitude, cameras)" vertex="1">
+          <mxGeometry height="45" width="120" x="-124.82057542067332" y="390.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-4" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#E65100;fontSize=9;align=center;" value="Bikes&#xa;(cadence, heart rate)" vertex="1">
+          <mxGeometry height="45" width="120" x="-124.82057542067332" y="450.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-5" parent="1" style="text;fontSize=9;fontColor=#666666;align=center;" value="Different schemas&#xa;per vehicle type" vertex="1">
+          <mxGeometry height="30" width="120" x="-124.82057542067332" y="510.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-6" edge="1" parent="1" source="lI0ybphXIj6wE4JpZoKR-1" style="edgeStyle=orthogonalEdgeStyle;" target="lI0ybphXIj6wE4JpZoKR-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-7" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E8EAF6;strokeColor=#3F51B5;fontStyle=1;fontSize=11;align=center;" value="Amazon Kinesis&#xa;Data Streams" vertex="1">
+          <mxGeometry height="60" width="140" x="95.17942457932668" y="380.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-8" edge="1" parent="1" source="lI0ybphXIj6wE4JpZoKR-7" style="edgeStyle=orthogonalEdgeStyle;" target="lI0ybphXIj6wE4JpZoKR-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-9" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E8EAF6;strokeColor=#3F51B5;fontStyle=1;fontSize=11;align=center;" value="AWS Glue 6.0&#xa;Ingestion Job" vertex="1">
+          <mxGeometry height="60" width="140" x="315.1794245793267" y="380.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-10" parent="1" style="rounded=0;whiteSpace=wrap;fillColor=none;strokeColor=none;fontSize=9;fontColor=#3F51B5;align=left;" value="PARSE_JSON → VARIANT&#xa;ST_GeomFromWKB → GEOMETRY&#xa;CAST → TIMESTAMP_NTZ(9)&#xa;DEFAULT values applied" vertex="1">
+          <mxGeometry height="60" width="160" x="315.1794245793267" y="450.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-11" edge="1" parent="1" source="lI0ybphXIj6wE4JpZoKR-9" style="edgeStyle=orthogonalEdgeStyle;" target="lI0ybphXIj6wE4JpZoKR-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-12" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E8F5E9;strokeColor=#2E7D32;fontStyle=1;fontSize=11;align=center;" value="Iceberg v3&#xa;vehicle_telemetry&#xa;(Amazon S3)" vertex="1">
+          <mxGeometry height="60" width="150" x="535.1794245793267" y="380.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-13" parent="1" style="rounded=0;whiteSpace=wrap;fillColor=none;strokeColor=none;fontSize=9;fontColor=#2E7D32;align=left;" value="GEOMETRY(4326)&#xa;TIMESTAMP_NTZ(9)&#xa;VARIANT&#xa;DEFAULT values" vertex="1">
+          <mxGeometry height="60" width="130" x="545.1794245793267" y="450.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-14" edge="1" parent="1" source="lI0ybphXIj6wE4JpZoKR-12" style="edgeStyle=orthogonalEdgeStyle;" target="lI0ybphXIj6wE4JpZoKR-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-15" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E8EAF6;strokeColor=#3F51B5;fontStyle=1;fontSize=11;align=center;" value="AWS Glue 6.0&#xa;Query Job" vertex="1">
+          <mxGeometry height="60" width="140" x="765.1794245793267" y="380.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-16" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FCE4EC;strokeColor=#C62828;fontSize=9;align=center;" value="Geofence Detection&#xa;ST_Intersects()" vertex="1">
+          <mxGeometry height="40" width="110" x="695.1794245793267" y="490.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-17" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E3F2FD;strokeColor=#1565C0;fontSize=9;align=center;" value="Nanosecond Sequencing&#xa;ORDER BY event_time" vertex="1">
+          <mxGeometry height="40" width="120" x="815.1794245793267" y="490.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-18" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#F3E5F5;strokeColor=#6A1B9A;fontSize=9;align=center;" value="Fleet Analytics&#xa;variant_get()" vertex="1">
+          <mxGeometry height="40" width="110" x="945.1794245793267" y="490.4871638371394" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-19" edge="1" parent="1" source="lI0ybphXIj6wE4JpZoKR-15" style="edgeStyle=orthogonalEdgeStyle;exitX=0.25;exitY=1;" target="lI0ybphXIj6wE4JpZoKR-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-20" edge="1" parent="1" source="lI0ybphXIj6wE4JpZoKR-15" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;" target="lI0ybphXIj6wE4JpZoKR-17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-21" edge="1" parent="1" source="lI0ybphXIj6wE4JpZoKR-15" style="edgeStyle=orthogonalEdgeStyle;exitX=0.75;exitY=1;" target="lI0ybphXIj6wE4JpZoKR-18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lI0ybphXIj6wE4JpZoKR-22" parent="1" style="shape=note;whiteSpace=wrap;size=10;fillColor=#FFFDE7;strokeColor=#F9A825;fontSize=9;align=center;" value="Config: spark.sql.geospatial.enabled=true" vertex="1">
+          <mxGeometry height="30" width="200" x="315.1794245793267" y="300.4871638371394" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="gGMaEAewa9qdARyC6NnI" name="Page-2">
+    <mxGraphModel dx="1055" dy="474" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-1" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFF3E0;strokeColor=#E65100;fontStyle=1;fontSize=12;verticalAlign=top;spacingTop=5;align=center;" value="Vehicle Fleet" vertex="1">
+          <mxGeometry height="260" width="160" x="221" y="222" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-2" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#E65100;fontSize=9;align=center;" value="Vans&#xa;(fuel, cargo, engine)" vertex="1">
+          <mxGeometry height="45" width="120" x="241" y="262" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-3" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#E65100;fontSize=9;align=center;" value="Drones&#xa;(battery, altitude, cameras)" vertex="1">
+          <mxGeometry height="45" width="120" x="241" y="322" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-4" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#E65100;fontSize=9;align=center;" value="Bikes&#xa;(cadence, heart rate)" vertex="1">
+          <mxGeometry height="45" width="120" x="241" y="382" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-5" parent="1" style="text;fontSize=9;fontColor=#666666;align=center;" value="Different schemas&#xa;per vehicle type" vertex="1">
+          <mxGeometry height="30" width="120" x="241" y="442" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-6" edge="1" parent="1" source="DJQz0Z6tfOQ1nBugYJt5-1" style="edgeStyle=orthogonalEdgeStyle;" target="DJQz0Z6tfOQ1nBugYJt5-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-7" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E8EAF6;strokeColor=#3F51B5;fontStyle=1;fontSize=11;align=center;" value="Amazon Kinesis&#xa;Data Streams" vertex="1">
+          <mxGeometry height="60" width="140" x="461" y="312" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-8" edge="1" parent="1" source="DJQz0Z6tfOQ1nBugYJt5-7" style="edgeStyle=orthogonalEdgeStyle;" target="DJQz0Z6tfOQ1nBugYJt5-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-9" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E8EAF6;strokeColor=#3F51B5;fontStyle=1;fontSize=11;align=center;" value="AWS Glue 6.0&#xa;Ingestion Job" vertex="1">
+          <mxGeometry height="60" width="140" x="681" y="312" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-10" parent="1" style="rounded=0;whiteSpace=wrap;fillColor=none;strokeColor=none;fontSize=9;fontColor=#3F51B5;align=left;" value="PARSE_JSON → VARIANT&#xa;ST_GeomFromWKB → GEOMETRY&#xa;CAST → TIMESTAMP_NTZ(9)&#xa;DEFAULT values applied" vertex="1">
+          <mxGeometry height="60" width="160" x="681" y="382" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-11" edge="1" parent="1" source="DJQz0Z6tfOQ1nBugYJt5-9" style="edgeStyle=orthogonalEdgeStyle;" target="DJQz0Z6tfOQ1nBugYJt5-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-12" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E8F5E9;strokeColor=#2E7D32;fontStyle=1;fontSize=11;align=center;" value="Iceberg v3&#xa;vehicle_telemetry&#xa;(Amazon S3)" vertex="1">
+          <mxGeometry height="60" width="150" x="901" y="312" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-13" parent="1" style="rounded=0;whiteSpace=wrap;fillColor=none;strokeColor=none;fontSize=9;fontColor=#2E7D32;align=left;" value="GEOMETRY(4326)&#xa;TIMESTAMP_NTZ(9)&#xa;VARIANT&#xa;DEFAULT values" vertex="1">
+          <mxGeometry height="60" width="130" x="911" y="382" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-14" edge="1" parent="1" source="DJQz0Z6tfOQ1nBugYJt5-12" style="edgeStyle=orthogonalEdgeStyle;" target="DJQz0Z6tfOQ1nBugYJt5-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-15" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E8EAF6;strokeColor=#3F51B5;fontStyle=1;fontSize=11;align=center;" value="AWS Glue 6.0&#xa;Query Job" vertex="1">
+          <mxGeometry height="60" width="140" x="1131" y="312" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-16" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FCE4EC;strokeColor=#C62828;fontSize=9;align=center;" value="Geofence Detection&#xa;ST_Intersects()" vertex="1">
+          <mxGeometry height="40" width="110" x="1061" y="422" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-17" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E3F2FD;strokeColor=#1565C0;fontSize=9;align=center;" value="Nanosecond Sequencing&#xa;ORDER BY event_time" vertex="1">
+          <mxGeometry height="40" width="120" x="1181" y="422" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-18" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#F3E5F5;strokeColor=#6A1B9A;fontSize=9;align=center;" value="Fleet Analytics&#xa;variant_get()" vertex="1">
+          <mxGeometry height="40" width="110" x="1311" y="422" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-19" edge="1" parent="1" source="DJQz0Z6tfOQ1nBugYJt5-15" style="edgeStyle=orthogonalEdgeStyle;exitX=0.25;exitY=1;" target="DJQz0Z6tfOQ1nBugYJt5-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-20" edge="1" parent="1" source="DJQz0Z6tfOQ1nBugYJt5-15" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;" target="DJQz0Z6tfOQ1nBugYJt5-17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-21" edge="1" parent="1" source="DJQz0Z6tfOQ1nBugYJt5-15" style="edgeStyle=orthogonalEdgeStyle;exitX=0.75;exitY=1;" target="DJQz0Z6tfOQ1nBugYJt5-18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DJQz0Z6tfOQ1nBugYJt5-22" parent="1" style="shape=note;whiteSpace=wrap;size=10;fillColor=#FFFDE7;strokeColor=#F9A825;fontSize=9;align=center;" value="Config: spark.sql.geospatial.enabled=true" vertex="1">
+          <mxGeometry height="30" width="200" x="681" y="232" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="UdwpWreGPRMhd_LSVgdu" name="Page-3">
+    <mxGraphModel dx="1055" dy="474" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="GVL359qO-WATT2O5j84O-1" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFF3E0;strokeColor=#E65100;fontStyle=1;fontSize=12;verticalAlign=top;spacingTop=5;align=center;" value="Vehicle Fleet" vertex="1">
+          <mxGeometry height="200" width="150" x="256" y="328" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-2" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#E65100;fontSize=9;align=center;" value="Vans&#xa;fuel, cargo, engine" vertex="1">
+          <mxGeometry height="40" width="120" x="271" y="363" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-3" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#E65100;fontSize=9;align=center;" value="Delivery Robots&#xa;battery, cameras, navigation" vertex="1">
+          <mxGeometry height="40" width="120" x="271" y="413" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-4" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFFFFF;strokeColor=#E65100;fontSize=9;align=center;" value="Bikes&#xa;cadence, heart rate, deliveries" vertex="1">
+          <mxGeometry height="40" width="120" x="271" y="463" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-5" edge="1" parent="1" source="GVL359qO-WATT2O5j84O-1" style="edgeStyle=orthogonalEdgeStyle;" target="GVL359qO-WATT2O5j84O-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-6" connectable="0" parent="GVL359qO-WATT2O5j84O-5" style="edgeLabel;fontSize=8;fontColor=#666666;" value="GPS + nanosecond&#xa;timestamps + JSON" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-37" y="5" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-7" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E8EAF6;strokeColor=#3F51B5;fontStyle=1;fontSize=11;align=center;" value="Amazon MSK" vertex="1">
+          <mxGeometry height="50" width="140" x="492" y="403" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-8" edge="1" parent="1" source="GVL359qO-WATT2O5j84O-7" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#C62828;strokeWidth=2;" target="GVL359qO-WATT2O5j84O-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-9" connectable="0" parent="GVL359qO-WATT2O5j84O-8" style="edgeLabel;fontSize=8;fontColor=#C62828;fontStyle=1;" value="Hot path" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-44" y="-38" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-10" edge="1" parent="1" source="GVL359qO-WATT2O5j84O-7" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#2E7D32;strokeWidth=2;" target="GVL359qO-WATT2O5j84O-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-11" connectable="0" parent="GVL359qO-WATT2O5j84O-10" style="edgeLabel;fontSize=8;fontColor=#2E7D32;fontStyle=1;" value="Cold path" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-24" y="5" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-12" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFEBEE;strokeColor=#C62828;fontStyle=1;fontSize=10;align=center;" value="Glue 6.0 Streaming&#xa;Real-Time Mode (RTM)" vertex="1">
+          <mxGeometry height="50" width="160" x="636" y="298" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-13" parent="1" style="text;fontSize=8;fontColor=#C62828;align=center;" value="Millisecond latency&#xa;Geofence alerts via ST_Intersects" vertex="1">
+          <mxGeometry height="30" width="160" x="624" y="363" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-14" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FFEBEE;strokeColor=#C62828;fontSize=9;align=center;" value="Kafka Topic&#xa;(geofence alerts)" vertex="1">
+          <mxGeometry height="40" width="120" x="839" y="303" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-15" edge="1" parent="1" source="GVL359qO-WATT2O5j84O-12" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#C62828;" target="GVL359qO-WATT2O5j84O-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-16" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E8F5E9;strokeColor=#2E7D32;fontStyle=1;fontSize=10;align=center;" value="Glue 6.0 Streaming&#xa;Micro-batch Ingestion" vertex="1">
+          <mxGeometry height="50" width="160" x="636" y="468" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-17" parent="1" style="text;fontSize=8;fontColor=#2E7D32;align=left;" value="PARSE_JSON → VARIANT&#xa;ST_GeomFromWKB → GEOMETRY&#xa;CAST → TIMESTAMP_NTZ(9)&#xa;DEFAULT values applied" vertex="1">
+          <mxGeometry height="55" width="155" x="641" y="523" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-18" edge="1" parent="1" source="GVL359qO-WATT2O5j84O-16" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#2E7D32;strokeWidth=2;" target="GVL359qO-WATT2O5j84O-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-19" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E8F5E9;strokeColor=#2E7D32;fontStyle=1;fontSize=10;align=center;" value="Iceberg v3 Table&#xa;vehicle_telemetry&#xa;(Amazon S3)" vertex="1">
+          <mxGeometry height="55" width="140" x="833" y="466" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-20" parent="1" style="text;fontSize=8;fontColor=#2E7D32;fontStyle=2;align=left;" value="GEOMETRY(4326)&#xa;TIMESTAMP_NTZ(9)&#xa;VARIANT&#xa;DEFAULT values" vertex="1">
+          <mxGeometry height="55" width="120" x="843" y="528" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-21" edge="1" parent="1" source="GVL359qO-WATT2O5j84O-19" style="edgeStyle=orthogonalEdgeStyle;" target="GVL359qO-WATT2O5j84O-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-22" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E8EAF6;strokeColor=#3F51B5;fontStyle=1;fontSize=10;align=center;" value="Glue 6.0&#xa;Analytics Job" vertex="1">
+          <mxGeometry height="50" width="130" x="1053" y="468" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-23" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#FCE4EC;strokeColor=#C62828;fontSize=9;align=center;" value="Geofence Detection&#xa;ST_Intersects()" vertex="1">
+          <mxGeometry height="40" width="110" x="983" y="578" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-24" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#E3F2FD;strokeColor=#1565C0;fontSize=9;align=center;" value="Nanosecond Sequencing&#xa;ORDER BY event_time" vertex="1">
+          <mxGeometry height="40" width="120" x="1103" y="578" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-25" parent="1" style="rounded=1;whiteSpace=wrap;fillColor=#F3E5F5;strokeColor=#6A1B9A;fontSize=9;align=center;" value="Fleet Analytics&#xa;variant_get()" vertex="1">
+          <mxGeometry height="40" width="100" x="1233" y="578" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-26" edge="1" parent="1" source="GVL359qO-WATT2O5j84O-22" style="edgeStyle=orthogonalEdgeStyle;" target="GVL359qO-WATT2O5j84O-23">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-27" edge="1" parent="1" source="GVL359qO-WATT2O5j84O-22" style="edgeStyle=orthogonalEdgeStyle;" target="GVL359qO-WATT2O5j84O-24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-28" edge="1" parent="1" source="GVL359qO-WATT2O5j84O-22" style="edgeStyle=orthogonalEdgeStyle;" target="GVL359qO-WATT2O5j84O-25">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-33" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#8C4FFF;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.glue;" value="" vertex="1">
+          <mxGeometry height="24" width="24" x="635" y="304" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-34" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#8C4FFF;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.glue;" value="" vertex="1">
+          <mxGeometry height="24" width="24" x="635" y="479" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-35" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#8C4FFF;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.managed_streaming_for_kafka;" value="" vertex="1">
+          <mxGeometry height="20" width="20" x="492" y="413" as="geometry" />
+        </mxCell>
+        <mxCell id="GVL359qO-WATT2O5j84O-36" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#8C4FFF;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.glue;" value="" vertex="1">
+          <mxGeometry height="24" width="24" x="1053" y="479" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
