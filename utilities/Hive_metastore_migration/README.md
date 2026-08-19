@@ -206,6 +206,20 @@ as an Glue ETL job, if AWS Glue can directly connect to your Hive metastore.
    - `--database-prefix` and `--table-prefix` (optional) to set a string prefix that is applied to the 
      database and table names. They are empty by default. 
      
+   - Optionally, you can set `--config_file` to `<path_to_your_config_json_file>` which contains the configuration parameters. If same parameters are specified in both the configuration json file and the command line, the parameters specified on the command line will be used. 
+     - Provide the following configuration parameters in the configuration json file:
+      ```json
+      {
+          "mode": "from-metastore",
+          "jdbc_url": "JDBC URL",
+          "jdbc_username": "JDBC username",
+          "jdbc_password": "JDBC password",
+          "database_prefix": "Database prefix",
+          "table_prefix": "Table prefix",
+          "output_path": "Output local or s3 path"
+      }
+      ```
+
    - Example spark-submit command to migrate Hive metastore to S3, tested on EMR-4.7.1:
     ```bash
     MYSQL_JAR_PATH=/usr/lib/hadoop/mysql-connector-java-5.1.42-bin.jar
@@ -360,7 +374,7 @@ as an Glue ETL job, if AWS Glue can directly connect to your Hive metastore.
 
 3. Submit the `hive_metastore_migration.py` Spark script to your Spark cluster.
 
-   - Set `--direction` to `to_metastore`.
+   - Set `--mode` to `to_metastore`.
    - Provide the JDBC connection information through the arguments:
      `--jdbc-url`, `--jdbc-username`, and `--jdbc-password`.
    - The argument `--input-path` is required. This can be a local directory or
@@ -382,6 +396,17 @@ as an Glue ETL job, if AWS Glue can directly connect to your Hive metastore.
 
          s3://gluemigrationbucket/export_output/<year-month-day-hour-minute-seconds>/
 
+   - Optionally, you can set `--config_file` to `<path_to_your_config_json_file>` which contains the configuration parameters. If same parameters are specified in both the configuration json file and the command line, the parameters specified on the command line will be used. 
+     - Provide the following configuration parameters in the configuration json file:
+      ```json
+      {
+          "mode": "to-metastore",
+          "jdbc_url": "JDBC URL",
+          "jdbc_username": "JDBC username",
+          "jdbc_password": "JDBC password",
+          "input_path": "Input local or S3 path"
+      }
+      ```
     	 
 #### AWS Glue Data Catalog to another AWS Glue Data Catalog
  
