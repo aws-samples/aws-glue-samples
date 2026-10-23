@@ -234,6 +234,10 @@ These skills are provided as-is as sample code (not a managed service) and are m
 
    Migrates deprecated Glue 0.9/1.0 dev endpoints to Glue 4.0 interactive sessions following the official AWS migration checklist. Backs up the dev endpoint configuration, maps workers/arguments/libraries to a session, and validates with a test statement.
 
+ - [Glue for Ray → Amazon EKS Migration](utilities/skills/migrating-glue-for-ray-jobs-to-amazon-eks/README.md)
+
+   Migrates an AWS Glue for Ray job to a KubeRay RayJob on Amazon EKS at the same Ray (2.4.0) and Python (3.9) versions, package versions, IAM permissions and capacity. Builds the job's image, renders the manifests and the pod role's policies, lists grants on other resources that name the Glue role, pauses for review, and validates with a test run that writes to locations you choose. The Glue job is never changed.
+
 ## Glue Custom Connectors
 AWS Glue provides [built-in support](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-connect.html) for the most commonly used data stores such as Amazon Redshift, MySQL, MongoDB. Powered by Glue ETL Custom Connector, you can subscribe a third-party connector from AWS Marketplace or build your own connector to connect to data stores that are not natively supported.
 

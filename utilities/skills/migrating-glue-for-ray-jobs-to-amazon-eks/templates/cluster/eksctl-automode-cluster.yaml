@@ -1,0 +1,32 @@
+# New EKS cluster with EKS Auto Mode for migrated Glue for Ray jobs.
+# Replace [TOKENS]. Review VPC/subnet choices with the customer before creating (must-ask).
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: [CLUSTER_NAME]
+  region: [REGION]
+  version: "[K8S_VERSION]"
+  tags:
+    migrated-from: glue-ray
+    glue-job: [JOB_NAME]
+autoModeConfig:
+  enabled: true
+  # Keep the built-in pools for system pods; Ray pods run only on the custom NodePool below.
+  nodePools: ["general-purpose", "system"]
+iam:
+  withOIDC: true          # required for IRSA (the Ray pods use IRSA for S3)
+vpc:
+  clusterEndpoints:
+    publicAccess: true    # only from publicAccessCIDRs; or set false and reach the API through a private path
+    privateAccess: true
+  # Must include the public IP of the machine running the migration (and of anything else that runs kubectl).
+  publicAccessCIDRs: ["[OPERATOR_CIDR]"]
+  # To reuse an existing VPC, set vpc.id and vpc.subnets.private instead of letting eksctl create one.
+# Required log pipeline (Step 7 item 4): pod logs are deleted with the pods shortly after each run. Leave this
+# block out only if the customer ships logs with a pipeline of their own (operator decision 14).
+addons:
+  - name: amazon-cloudwatch-observability
+    podIdentityAssociations:   # Auto Mode runs the EKS Pod Identity agent
+      - namespace: amazon-cloudwatch
+        serviceAccountName: cloudwatch-agent
+        permissionPolicyARNs: ["arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"]

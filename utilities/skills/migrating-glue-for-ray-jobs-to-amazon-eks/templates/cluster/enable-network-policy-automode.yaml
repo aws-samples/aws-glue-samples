@@ -1,0 +1,9 @@
+# EKS Auto Mode does not enforce NetworkPolicies until this ConfigMap is applied.
+# The Ray jobs' NetworkPolicy relies on enforcement.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: amazon-vpc-cni
+  namespace: kube-system
+data:
+  enable-network-policy-controller: "true"

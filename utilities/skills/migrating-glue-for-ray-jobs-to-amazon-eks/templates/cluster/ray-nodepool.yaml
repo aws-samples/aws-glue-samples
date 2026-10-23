@@ -1,0 +1,63 @@
+# EKS Auto Mode NodeClass + NodePool for Ray pods: Graviton r7g.2xlarge (~= Glue Z.2X: 8 vCPU / 64 GiB),
+# on-demand, 160 GiB ephemeral storage (Z.2X had 128 GB disk; Auto Mode default is 80 GiB),
+# NetworkPolicy enforcement on, and no consolidation of nodes that still run Ray pods.
+#
+# Tokens:
+#   [NODE_ROLE_NAME]  reuse the node role of the cluster's built-in pools (its access entry already
+#                     exists). A different role needs `aws eks create-access-entry --type EC2` plus the
+#                     AmazonEKSAutoNodePolicy access policy, or nodes never join.
+#   [CLUSTER_SG_ID]   aws eks describe-cluster --query cluster.resourcesVpcConfig.clusterSecurityGroupId
+#   [SUBNET_ID_n]     private subnets for the Ray nodes: one subnetSelectorTerms entry per subnet (add or
+#                     remove entries to match the VPC)
+#   [INSTANCE_TYPE]   r7g.2xlarge (arm64) or r7a.2xlarge (amd64); must match the image architecture
+#   [MAX_VCPU]        hard ceiling for this pool = (largest job's NumberOfWorkers) x 8 x (concurrent jobs)
+apiVersion: eks.amazonaws.com/v1
+kind: NodeClass
+metadata:
+  name: ray-z2x
+spec:
+  role: [NODE_ROLE_NAME]
+  subnetSelectorTerms:
+    - id: [SUBNET_ID_1]
+    - id: [SUBNET_ID_2]
+  securityGroupSelectorTerms:
+    - id: [CLUSTER_SG_ID]
+  networkPolicy: DefaultAllow        # enforce NetworkPolicy objects; unmatched pods stay open
+  ephemeralStorage:
+    size: "[EPHEMERAL_STORAGE_GIB]Gi"
+  # No custom `tags:` here. The Auto Mode cluster role (AmazonEKSComputePolicy) may only create EC2
+  # resources with EKS-owned tags; custom tags fail validation with "Controller isn't authorized to call
+  # ec2:CreateLaunchTemplate" unless the cluster role gets an extra tagging policy (EKS docs: "Create a
+  # Node Class"). Instances still carry eks:eks-cluster-name, which is enough to find them.
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: ray-z2x
+spec:
+  template:
+    metadata:
+      labels:
+        workload: ray
+    spec:
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: ray-z2x
+      taints:
+        - key: workload
+          value: ray
+          effect: NoSchedule
+      requirements:
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: ["[INSTANCE_TYPE]"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]      # add "spot" only with idempotent outputs and RayJob backoffLimit
+      expireAfter: 336h
+  disruption:
+    consolidationPolicy: WhenEmpty   # never repack nodes that still run Ray pods
+    consolidateAfter: 2m
+  limits:
+    cpu: "[MAX_VCPU]"
