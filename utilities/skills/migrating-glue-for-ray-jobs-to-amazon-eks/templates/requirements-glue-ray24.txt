@@ -1,0 +1,29 @@
+# Glue for Ray "Ray2.4" runtime: every package whose version differs from the rayproject/ray:2.4.0-py39
+# image, or that the image lacks, plus the modules Glue documents for Ray2.4 (some already match the
+# image). resolve-deps.sh installs this set first, as Glue's runtime had it, then the job's --pip-install
+# on top, so the job's requirements win where they need other versions (as on Glue). ray itself stays at
+# the base image's version.
+boto3==1.26.133
+botocore==1.29.133
+certifi==2023.5.7
+charset-normalizer==3.1.0
+colorama==0.4.6
+fsspec==2023.4.0
+google-auth==2.18.0
+jmespath==1.0.1
+numpy==1.24.3
+packaging==23.1
+pandas==1.5.3
+platformdirs==3.5.1
+protobuf==4.23.0
+pyarrow==11.0.0
+pydantic==1.10.7
+requests==2.31.0
+s3transfer==0.6.1
+setproctitle==1.2.2
+setuptools==67.7.2
+setuptools-scm==7.1.0
+six==1.16.0
+smart_open[s3]==6.2.0
+tomli==2.0.1
+yarl==1.9.2

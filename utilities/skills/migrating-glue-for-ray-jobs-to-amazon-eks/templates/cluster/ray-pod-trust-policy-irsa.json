@@ -1,0 +1,19 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {"Federated": "arn:aws:iam::[ACCOUNT_ID]:oidc-provider/[OIDC_PROVIDER]"},
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "[OIDC_PROVIDER]:aud": "sts.amazonaws.com",
+          "[OIDC_PROVIDER]:sub": [
+            "system:serviceaccount:[NAMESPACE]:[JOB_PREFIX]-ray-head",
+            "system:serviceaccount:[NAMESPACE]:[JOB_PREFIX]-ray-worker"
+          ]
+        }
+      }
+    }
+  ]
+}

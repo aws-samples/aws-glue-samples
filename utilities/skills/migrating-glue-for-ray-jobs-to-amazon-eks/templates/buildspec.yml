@@ -1,0 +1,52 @@
+# AWS CodeBuild buildspec: resolve the dependencies (Step 4) and build, check and push the image (Step 6)
+# natively on the target architecture: an ARM_CONTAINER environment for arm64 (the default), or a
+# LINUX_CONTAINER environment for an amd64 image, both with privileged mode (Docker). The source is the
+# job's work directory, uploaded as a zip:
+#   requirements-glue-ray24.txt, requirements.in, source/, wheels/ (may be empty), Dockerfile, scripts/resolve-deps.sh
+# For PHASE=build, also include the reviewed out/final-requirements.txt and the wheels/ from the resolve
+# build's artifacts: the build then installs exactly that lockfile instead of resolving again.
+# The project's service role pushes to ECR; no AWS credentials are copied anywhere.
+#
+# Environment variables (set on the project or with start-build --environment-variables-override):
+#   BASE_IMAGE        [BASE_IMAGE_ARM64] ([BASE_IMAGE_AMD64] for an amd64 image)
+#   PY_MODULES_PATH   the colon list printed by unpack_py_modules.py (Step 2); empty if none
+#   REPO              ECR repository name;  TAG   image tag (immutable)
+#   GLUE_JOB          the Glue job name (tag on a repository the build creates)
+#   PHASE             required: "resolve" (Step 4: review out/ before building) or "build" (Step 6, from the
+#                     reviewed out/final-requirements.txt; fails without it, so nothing unreviewed is pushed)
+version: 0.2
+phases:
+  build:
+    commands:
+      # One script block: CodeBuild runs each list item separately, so `exit` and `set -e` in one item
+      # would not stop or guard the next ones.
+      - |
+        set -eu
+        ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+        ECR_URI=${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO}
+        mkdir -p wheels out
+        case "${PHASE:-}" in
+          resolve)
+            # Step 4: resolve inside the base image, as on a native machine of that architecture.
+            docker run --rm -u $(id -u):100 -e HOME=/tmp -v $PWD:/w -v $PWD/scripts:/w/scripts:ro "$BASE_IMAGE" bash /w/scripts/resolve-deps.sh
+            cat out/import-check.txt ;;
+          build)
+            # Build from the lockfile reviewed after PHASE=resolve; never resolve again here.
+            [ -s out/final-requirements.txt ] || { echo "PHASE=build needs the reviewed out/final-requirements.txt in the source zip (run PHASE=resolve first)"; exit 1; }
+            echo "Using the reviewed out/final-requirements.txt" ;;
+          *) echo "Set PHASE to resolve or build"; exit 1 ;;
+        esac
+        if [ "$PHASE" = build ]; then
+          # Step 6: the build context holds only the job's code and its dependencies.
+          mkdir -p app && cp source/main.py app/main.py && if [ -d source/py_modules ]; then cp -r source/py_modules app/; fi
+          cp out/final-requirements.txt final-requirements.txt
+          docker build --build-arg BASE_IMAGE="$BASE_IMAGE" --build-arg PY_MODULES_PATH="${PY_MODULES_PATH:-}" -t "$ECR_URI:$TAG" -f Dockerfile .
+          docker run --rm "$ECR_URI:$TAG" python -c "import ray, platform, sys; print(ray.__version__, sys.version.split()[0], platform.machine())"
+          aws ecr describe-repositories --repository-names "$REPO" >/dev/null 2>&1 || aws ecr create-repository --repository-name "$REPO" --image-scanning-configuration scanOnPush=true --image-tag-mutability IMMUTABLE --tags Key=migrated-from,Value=glue-ray "Key=glue-job,Value=${GLUE_JOB:-unknown}"
+          aws ecr get-login-password | docker login --username AWS --password-stdin "${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          docker push "$ECR_URI:$TAG"
+        fi
+artifacts:
+  files:
+    - out/**/*
+    - wheels/**/*
