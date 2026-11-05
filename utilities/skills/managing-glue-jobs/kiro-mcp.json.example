@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "spark-upgrade": {
+      "command": "uvx",
+      "args": [
+        "mcp-proxy-for-aws@latest",
+        "https://sagemaker-unified-studio-mcp.<region>.api.aws/spark-upgrade/mcp",
+        "--service",
+        "sagemaker-unified-studio-mcp",
+        "--region",
+        "<region>",
+        "--read-timeout",
+        "180"
+      ],
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

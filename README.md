@@ -238,6 +238,10 @@ These skills are provided as-is as sample code (not a managed service) and are m
 
    Migrates an AWS Glue for Ray job to a KubeRay RayJob on Amazon EKS at the same Ray (2.4.0) and Python (3.9) versions, package versions, IAM permissions and capacity. Builds the job's image, renders the manifests and the pod role's policies, lists grants on other resources that name the Glue role, pauses for review, and validates with a test run that writes to locations you choose. The Glue job is never changed.
 
+ - [Managing Glue Jobs: Auto Version](utilities/skills/managing-glue-jobs/README.md)
+
+   Sets up AWS Glue auto version (GlueVersion = "auto") for existing Spark ETL jobs and handles upgrade consent. Assesses eligibility (with the SageMaker Unified Studio Spark Upgrade MCP server, or without it for jobs you confirm one by one), enables auto version with a full-definition update for the jobs you confirm, sets up encrypted email notifications, reviews upgrades waiting for consent before you approve or decline each job by name, and explains a finished or failed upgrade from its evaluation summary.
+
 ## Glue Custom Connectors
 AWS Glue provides [built-in support](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-connect.html) for the most commonly used data stores such as Amazon Redshift, MySQL, MongoDB. Powered by Glue ETL Custom Connector, you can subscribe a third-party connector from AWS Marketplace or build your own connector to connect to data stores that are not natively supported.
 
