@@ -168,6 +168,24 @@ The upgrade happens over the job's next runs:
 - After the upgrade graduates, GlueVersion stays auto; future Glue versions follow the same consent flow.
 ```
 
+After the three upgrade runs on Glue 6.0 finish, you get the "upgrade completed" email.
+
+**You:**
+
+```text
+Can you check the status of etl-sales-daily?
+```
+
+**Agent** (after a status read and a read of the job's evaluation summary; the presigned summary link is never shown):
+
+```text
+etl-sales-daily (analysis ja-0a1b2c3d-1111-4222-8333-444455556666, Glue 4.0 -> 6.0): Upgraded to Glue 6.0.
+
+The 3 upgraded runs on Glue 6.0 passed every check against the 3 baseline runs on Glue 4.0: operation structure, schema, output file format, completeness, output row count and output file count. Execution time is marked WARN (advisory): 455 s on Glue 6.0 against 410 s on the baseline.
+
+The job now runs on Glue 6.0 and stays on auto version; a later Glue version goes through the same consent flow.
+```
+
 ---
 
 
