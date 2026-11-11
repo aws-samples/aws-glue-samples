@@ -11,7 +11,7 @@ An AI-agent skill for AWS Glue automatic version upgrades (auto upgrade, `GlueVe
 3. Set up email notifications.
 4. Turn on auto upgrade.
 5. Review the eligibility summary.
-6. Approve or decline one named job.
+6. Approve or decline each job you name, or decide each waiting job on a blocking-issue condition.
 7. Monitor the result.
 
 ---
@@ -102,10 +102,24 @@ AWS Glue now emails data-team@example.com about auto upgrades in us-east-1. To s
 If you miss an email, enter `Which of my Glue jobs in us-east-1 are waiting for upgrade approval?`
 ```
 
-If the email setup can't complete (for example, a missing permission), the agent stops before turning on any job and tells you what to grant. From an eval run:
+If the email setup fails (for example, a missing permission), the agent still turns on the confirmed jobs, reports what failed and what it created, and offers a retry of only the email setup. A conflict with existing notification resources is the exception: it stops both. From an eval run, where the role couldn't read EventBridge rules:
 
 ```text
-The current role lacks EventBridge permissions (`events:DescribeRule`), so I can't check or create the notification rules. … Per the skill, the emails must be set up before turning on auto upgrade, so no approval email is missed. Since I can't complete the notification setup, I'll stop and tell you what to grant, rather than turning on auto upgrade without the emails you asked for.
+Auto upgrade is now on for etl-sales-daily. The job stays on AWS Glue 4.0 until you approve an upgrade.
+
+| Job             | GlueVersion | Runs on |
+|-----------------|-------------|---------|
+| etl-sales-daily | `auto`      | 4.0     |
+
+What happens next
+1. You keep running the job as usual.
+2. AWS Glue analyzes the job and doesn't change it.
+3. If the job needs no changes, AWS Glue emails you and requests your approval. You have 7 days to approve or decline.
+
+Email notifications
+The email setup didn't finish: checking the existing EventBridge rules failed with an access denied error (missing `events:DescribeRule` and `events:ListTargetsByRule` on `glue-auto-upgrade-*` rules). It created nothing in this run. Grant that permission, then enter `proceed, email data-team@example.com` to retry just the email setup. The job is already on `auto`, so that retry skips it.
+
+To check for approval requests later, enter `Which of my Glue jobs in us-east-1 are waiting for upgrade approval?`
 ```
 
 ### Review the eligibility summary
@@ -154,13 +168,37 @@ You approved the upgrade for etl-inventory-nightly. Subsequent job runs use AWS 
 After the first upgraded run, check its output.
 ```
 
+### Approve on a condition
+
+Instead of naming the decision after the review, you can decide on the blocking-issue condition, for one job or every waiting job.
+
+**You:**
+
+```text
+Check the pending Glue auto upgrade for etl-inventory-nightly in account 111122223333 us-east-1 and if there are no blocking issues just approve it.
+```
+
+**Agent** (from an eval run; in the same turn, it confirms the job is still waiting for approval and reads its eligibility summary before it approves):
+
+```text
+You approved the upgrade for etl-inventory-nightly. Subsequent job runs use AWS Glue 6.0.
+
+The eligibility summary listed no blocking issues: Configuration, Application Code, and Dependencies all passed, and AWS Glue recorded no write operations during the observation run (write mode `Not recorded`).
+
+After the first upgraded run, check its output.
+
+A recorded decision can't be changed. To keep this job off the new version, turn off auto upgrade before its next run: enter `Turn off auto upgrade for etl-inventory-nightly and keep it on AWS Glue 3.0`.
+```
+
+For several jobs, or for "approve if there are no blocking issues, decline otherwise", the reply has one row per job, with the result (Approved, Declined or Held) and the reason (template shape, `references/approval.md`). A job whose summary the agent can't read, for example one encrypted with your AWS KMS key, is held.
+
 ---
 
 ## Important constraints: read before running
 
 1. **Turning on auto upgrade changes the job.** `update-job` replaces the whole job definition. The skill builds the update from a fresh `get-job`, sets only `GlueVersion` to `auto`, and reads the job back. It stops for a job whose `ProfileName` or `SourceControlDetails` an update can't keep.
 2. **Approval runs your job on the new version.** After you approve, subsequent runs use the target version and write to the job's real outputs. AWS Glue doesn't remove data that upgraded runs wrote. A failed upgraded run is retried on the previous version, which writes to the same targets again. That's why each job must be safe to retry.
-3. **One named decision per job.** The skill records an approval or a decline only after it shows that job's review, and only when you name the job and the decision. It doesn't approve in bulk, on a condition ("approve it if there are no blocking issues"), or on a schedule. A recorded decision can't be changed.
+3. **Decisions come only from your instruction.** The skill records an approval or a decline in two cases. Either you name the job and the decision after it shows that job's review, or you decide on the blocking-issue condition ("approve it if there are no blocking issues", "decline it if it has blocking issues", or both) for named jobs or for every waiting job. For a conditional decision, it checks in the same turn that each job is still waiting for approval and reads its eligibility summary. It holds any job whose summary it can't read. A reply such as "no" or "not now" isn't a decline: nothing is recorded. It never decides on a schedule, and it never approves all jobs without the condition. A recorded decision can't be changed.
 4. **Summary links are credentials.** The eligibility summary and the auto upgrade evaluation summary can be presigned links. The skill reads them inside one command and never prints or stores them. An encrypted summary is read in the AWS Glue console.
 5. **Attribution.** Every `update-job` and `create-job` is prefixed with `AWS_SDK_UA_APP_ID=managing-glue-jobs-skill`, so the change can be attributed in AWS CloudTrail.
 6. **If you set up emails with an earlier version of this skill:** your account already has the EventBridge rules `glue-auto-version-consent-required`, `glue-auto-version-upgrade-completed`, `glue-auto-version-upgrade-failed` and `glue-auto-version-upgrade-stopped`, and the SNS topic `glue-auto-version-notifications`. This version creates `glue-auto-upgrade-*` rules and the topic `glue-auto-upgrade-notifications`. The skill doesn't detect or change the earlier resources, so each auto upgrade event sends two emails until you delete the earlier rules and topic yourself.
@@ -187,12 +225,12 @@ After the first upgraded run, check its output.
 - `aws glue update-job` to set `GlueVersion` to `auto`, or back to a specific version to turn auto upgrade off;
 - `aws glue create-job` for a new job with auto upgrade, on request;
 - one SNS topic, an email subscription, five EventBridge rules and their targets, and one topic policy statement. These are created only when missing; existing resources are never overwritten;
-- `aws glue start-job-upgrade-analysis --upgrade-consent APPROVE` or `DECLINE` for one named job.
+- `aws glue start-job-upgrade-analysis --upgrade-consent APPROVE` or `DECLINE` for each job that you name, or that your blocking-issue condition covers.
 
 **Never:**
 
 - creates or modifies IAM roles or policies, or KMS keys;
-- approves or declines in bulk, on a condition or on a schedule;
+- decides on a schedule, approves or declines in bulk without the blocking-issue condition, or decides a job whose summary it can't read;
 - sends a partial job update, or changes a job's `MaxRetries` or job run queuing;
 - edits job scripts;
 - prints or stores a presigned summary link;
