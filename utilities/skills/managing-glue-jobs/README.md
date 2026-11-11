@@ -209,7 +209,7 @@ For several jobs, or for "approve if there are no blocking issues, decline other
 
 - **AWS CLI v2, latest version,** with the auto upgrade commands. The skill checks with `aws glue get-job-upgrade-analysis --generate-cli-skeleton > /dev/null` and stops if the CLI is too old. It never installs or updates software.
 - **AWS credentials** for the account and Region. Read-only credentials are enough for assessment and review.
-- **Optional:** the `spark-upgrade` MCP server for the assessment (see Quick start). The AWS MCP server is recommended for working with AWS, but this skill doesn't require it.
+- **Optional:** the `spark-upgrade` MCP server for the assessment (see Quick start).
 - `curl`, to read summaries served as presigned links.
 
 ### IAM permissions
