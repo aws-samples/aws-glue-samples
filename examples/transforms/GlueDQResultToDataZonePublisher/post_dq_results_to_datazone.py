@@ -22,7 +22,7 @@ import pyspark
 from datetime import datetime
 from awsglue import DynamicFrame
 
-def post_dq_results_to_datazone(self, roleToAssume: str, dzDomain: str, tableName: str, schemaName: str, dqRuleSetName: str, maxResults: int ) -> str:
+def post_dq_results_to_datazone(self, roleToAssume: str, dzDomain: str, tableName: str, schemaName: str, dqRuleSetName: str, maxResults: int, owningProjectId: str = None ) -> str:
     """
     Post data quality results to Amazon DataZone.
 
@@ -34,6 +34,12 @@ def post_dq_results_to_datazone(self, roleToAssume: str, dzDomain: str, tableNam
         schemaName (str): The name of the schema.
         dqRuleSetName (str): The name of the ruleset.
         maxResults (int): The maximum number of asset IDs to consider.
+        owningProjectId (str, optional): The id of the DataZone project that owns the target asset.
+            When set, only assets owned by this project are matched. This disambiguates the case
+            where the same schema/table is published under more than one project (a domain-wide
+            search by table name would otherwise match assets in projects the caller is not a
+            member of, causing an AccessDenied on post_time_series_data_points). When left as None
+            the previous behaviour is preserved: every asset matching the schema/table name is used.
 
     Returns:
         str: A success or error message.
@@ -53,7 +59,7 @@ def post_dq_results_to_datazone(self, roleToAssume: str, dzDomain: str, tableNam
         get_logger().info(f'DataZone Client ready!')
 
         # Search for the asset ID
-        entity_identifier_list = search_asset_id(datazone, dzDomain, tableName, schemaName,maxResults)
+        entity_identifier_list = search_asset_id(datazone, dzDomain, tableName, schemaName, maxResults, owningProjectId)
         
         get_logger().info(f'list pf entity identifiers: {entity_identifier_list}')
 
@@ -146,7 +152,7 @@ def get_current_region() -> str:
         get_logger().error(f"Error getting current region: {e}")
         raise DataQualityJobError(f"Error getting current region: {e}")
 
-def search_asset_id(datazone, dzDomain, tableName, schemaName, maxResults: int) -> str:
+def search_asset_id(datazone, dzDomain, tableName, schemaName, maxResults: int, owningProjectId: str = None) -> str:
     """
     Search for an asset in Amazon DataZone.
 
@@ -156,14 +162,18 @@ def search_asset_id(datazone, dzDomain, tableName, schemaName, maxResults: int) 
         tableName (str): The name of the table.
         schemaName (str): The name of the schema.
         maxResults (int): The maximum number of results to return.
+        owningProjectId (str, optional): When set, only assets owned by this project are matched.
+            search_listings is domain-wide, so if the same schema/table is published under more
+            than one project the name match alone can return assets the caller does not own. When
+            None (default), the previous behaviour is preserved and every name match is returned.
 
     Returns:
         list: The list of entity identifiers for the asset, or None if not found.
     """
     get_logger().info(f'starting search ... ')
-        
+
     entity_identifier_list=[]
-        
+
     try:
         response = datazone.search_listings(
             additionalAttributes=['FORMS'],
@@ -179,12 +189,18 @@ def search_asset_id(datazone, dzDomain, tableName, schemaName, maxResults: int) 
                 forms_dict['RedshiftTableForm']['tableName'] == tableName) or \
                 ('GlueTableForm' in forms_dict and
                 f"table/{schemaName}/{tableName}" in forms_dict['GlueTableForm']['tableArn']):
+                # When an owning project is specified, skip assets owned by a different project.
+                # This avoids posting to (and being denied on) a same-named asset in a project
+                # the caller is not a member of.
+                if owningProjectId and item['assetListing'].get('owningProjectId') != owningProjectId:
+                    get_logger().info(f"Skipping asset owned by project {item['assetListing'].get('owningProjectId')}, expected {owningProjectId}")
+                    continue
                 entity_identifier=item['assetListing']['entityId']
                 get_logger().info(f"DZ Asset Id: {entity_identifier_list}")
                 entity_identifier_list.append(entity_identifier)
             else:
                 get_logger().info(f'No matching asset found in this iteration')
-            
+
         get_logger().info(f"DZ Asset Id list: {entity_identifier_list}")
         return entity_identifier_list
     except Exception as e:
