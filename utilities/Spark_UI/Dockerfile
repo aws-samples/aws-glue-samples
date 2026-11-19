@@ -5,7 +5,7 @@ RUN dnf --setopt=install_weak_deps=False install -y java-17-amazon-corretto mave
 WORKDIR /tmp/
 ADD pom.xml /tmp
 
-ARG SPARK_VERSION=3.5.2
+ARG SPARK_VERSION=3.5.7
 RUN curl -o ./spark-${SPARK_VERSION}-bin-without-hadoop.tgz https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-without-hadoop.tgz
 RUN tar -xzf spark-${SPARK_VERSION}-bin-without-hadoop.tgz && \
     mv spark-${SPARK_VERSION}-bin-without-hadoop /opt/spark && \
